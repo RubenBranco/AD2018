@@ -7,7 +7,7 @@ Números de aluno: 50006, 50013, 50019
 """
 
 # Zona para fazer importação
-
+import datetime
 
 
 ###############################################################################
@@ -29,7 +29,7 @@ class resource_lock:
         o bloqueio do recurso até time_limit.
         Retorna True se bloqueou o recurso ou False caso contrário.
         """
-        if self.status == 'Desbloqueado':
+        if self.status == 'Desbloqueado' or (self.status == 'Bloqueado' and self.client == client_id):
             self.status = 'Bloqueado'
             self.num_blocks += 1
             self.client = client_id
@@ -92,9 +92,11 @@ class lock_pool:
         recurso seja libertado.
 		Define T, o tempo máximo de concessão de bloqueio.
         """
+        self.locks = [resource_lock() for _ in range(N)]
         self.N = N
         self.K = K
         self.Y = Y
+        self.num_blocked = 0
         self.T = T
         
     def clear_expired_locks(self):
@@ -103,7 +105,16 @@ class lock_pool:
         de concessão do bloqueio. Liberta os recursos caso o seu tempo de
         concessão tenha expirado.
         """
-        pass # Remover esta linha e fazer implementação da função
+        time_now = datetime.datetime.now()
+        for lock in self.locks:
+            if lock.time_valid < time_now:
+                lock.urelease()
+    
+    def __try_lock__(self, resource_id, client_id, time_limit):
+        status = self.locks[resource_id].test()
+        if status != 'Inativo' and self.num_blocked < self.Y:
+            return True
+        return False
 
     def lock(self, resource_id, client_id, time_limit):
         """
@@ -115,40 +126,51 @@ class lock_pool:
         verificar estas condições.
         Retorna True em caso de sucesso e False caso contrário.
         """
-        pass # Remover esta linha e fazer implementação da função
-
+        if self.__try_lock__(resource_id, client_id, time_limit):
+            lock_return = self.locks[resource_id].lock(client_id, datetime.datetime.now() + datetime.timedelta(seconds=self.T))
+            if lock_return:
+                self.num_blocked += 1
+            return lock_return
+        return False
+        
     def release(self, resource_id, client_id):
         """
         Liberta o bloqueio sobre o recurso resource_id pelo cliente client_id.
         True em caso de sucesso e False caso contrário.
         """
-        pass # Remover esta linha e fazer implementação da função
+        release_return = self.locks[resource_id].release(client_id)
+        if release_return:
+            self.num_blocked -= 1
+        return release_return
 
     def test(self,resource_id):
         """
-        Retorna True se o recurso resource_id estiver bloqueado e False caso 
+        Retorna True se o recurso resource_id estiver desbloqueado e False caso 
         esteja bloqueado ou inativo.
         """
-        pass # Remover esta linha e fazer implementação da função
+        resource_status = self.locks[resource_id].test()
+        if resource_status == 'Desbloqueado':
+            return True
+        return False
 
     def stat(self,resource_id):
         """
         Retorna o número de vezes que o recurso resource_id já foi bloqueado, dos 
         K bloqueios permitidos.
         """
-        pass # Remover esta linha e fazer implementação da função
+        return self.locks[resource_id].stat()
 
     def stat_y(self):
         """
         Retorna o número de recursos bloqueados num dado momento do Y permitidos.
         """
-        pass # Remover esta linha e fazer implementação da função
+        return self.num_blocked
 
     def stat_n(self):
         """
         Retorna o número de recursos disponíneis em N.
         """
-        pass # Remover esta linha e fazer implementação da função
+        return self.N - self.num_blocked
 		
     def __repr__(self):
         """
