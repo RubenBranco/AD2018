@@ -8,9 +8,12 @@ Números de aluno: 50006, 50013, 50019
 
 # Zona para fazer importação
 import time
-
+import sock_utils
+import argparse
+import signal
 
 ###############################################################################
+
 
 class resource_lock:
     def __init__(self):
@@ -62,7 +65,7 @@ class resource_lock:
         encontre inativo.
         """
         return self.status
-    
+
     def stat(self):
         """
         Retorna o número de vezes que este recurso já foi bloqueado em k.
@@ -77,7 +80,7 @@ class resource_lock:
         self.urelease()
         self.status = 'Inativo'
 
-        
+
 ###############################################################################
 
 class lock_pool:
@@ -90,7 +93,7 @@ class lock_pool:
         Define Y, o número máximo permitido de recursos bloqueados num dado 
         momento. Ao atingir Y, não é possível realizar mais bloqueios até que um 
         recurso seja libertado.
-		Define T, o tempo máximo de concessão de bloqueio.
+                Define T, o tempo máximo de concessão de bloqueio.
         """
         self.locks = [resource_lock() for _ in range(N)]
         self.N = N
@@ -98,7 +101,7 @@ class lock_pool:
         self.Y = Y
         self.num_blocked = 0
         self.T = T
-        
+
     def clear_expired_locks(self):
         """
         Verifica se os recursos que estão bloqueados ainda estão dentro do tempo
@@ -109,7 +112,7 @@ class lock_pool:
         for lock in self.locks:
             if lock.time_valid < time_now:
                 lock.urelease()
-    
+
     def __try_lock__(self, resource_id, client_id, time_limit):
         status = self.locks[resource_id].test()
         if status != 'Inativo' and self.num_blocked < self.Y:
@@ -127,12 +130,13 @@ class lock_pool:
         Retorna True em caso de sucesso e False caso contrário.
         """
         if self.__try_lock__(resource_id, client_id, time_limit):
-            lock_return = self.locks[resource_id].lock(client_id, time.time() + self.T)
+            lock_return = self.locks[resource_id].lock(
+                client_id, time.time() + self.T)
             if lock_return:
                 self.num_blocked += 1
             return lock_return
         return False
-        
+
     def release(self, resource_id, client_id):
         """
         Liberta o bloqueio sobre o recurso resource_id pelo cliente client_id.
@@ -143,7 +147,7 @@ class lock_pool:
             self.num_blocked -= 1
         return release_return
 
-    def test(self,resource_id):
+    def test(self, resource_id):
         """
         Retorna True se o recurso resource_id estiver desbloqueado e False caso 
         esteja bloqueado ou inativo.
@@ -153,7 +157,7 @@ class lock_pool:
             return True
         return False
 
-    def stat(self,resource_id):
+    def stat(self, resource_id):
         """
         Retorna o número de vezes que o recurso resource_id já foi bloqueado, dos 
         K bloqueios permitidos.
@@ -171,7 +175,7 @@ class lock_pool:
         Retorna o número de recursos disponíneis em N.
         """
         return self.N - self.num_blocked
-		
+
     def __repr__(self):
         """
         Representação da classe para a saída standard. A string devolvida por
@@ -184,7 +188,8 @@ class lock_pool:
             if status == "Inativo" or status == "Desbloqueado":
                 output += "recurso {} {}\n".format(i, status.lower())
             else:
-                output += "recurso {} bloqueado pelo cliente {} até {}\n".format(i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
+                output += "recurso {} bloqueado pelo cliente {} até {}\n".format(
+                    i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
         #
         # Acrescentar na output uma linha por cada recurso bloqueado, da forma:
         # recurso <número do recurso> bloqueado pelo cliente <id do cliente> até
@@ -200,6 +205,41 @@ class lock_pool:
 ###############################################################################
 
 # código do programa principal
+class Server:
+    def __init__(self, port, N, K, Y, T):
+        self.port = port
+        self.lock_pool = lock_pool(N, K, Y, T)
+        self.tcp_server = sock_utils.create_tcp_server_socket('127.0.0.1', port, 1)
+        self.stop_flag = False
 
+        signal.signal(signal.SIGINT, self.event_handler)
 
+    def event_handler(self, sig, frame):
+        self.stop_flag = True
 
+    def serve_forever(self):
+        while not self.stop_flag:
+            conn_sock, addr = self.tcp_server.accept()
+            print "Ligado a cliente com IP {} e porto {}".format(addr[0], addr[1])
+            # TODO Regueira 
+            # Falta receber mensagens e interpreta-las
+            # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
+        self.tcp_server.close()
+        
+
+if __name__ == "__main__":
+    description = "Servidor TCP para gestão de exclusão mútua de recursos."
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument("port", type=int, metavar="port",
+                        help="Porto em que o servidor irá correr")
+    parser.add_argument("N", type=int, metavar="N",
+                        help="Número de recursos que serão geridos pelo servidor.")
+    parser.add_argument("K", type=int, metavar="K",
+                        help="Número de bloqueios permitidos de cada recurso.")
+    parser.add_argument("Y", type=int, metavar="Y",
+                        help="Número permitido de recursos bloqueados num dado momento.")
+    parser.add_argument("T", type=int, metavar="T",
+                        help="Tempo de concessão (em segundos) dos bloqueios.")
+    args = parser.parse_args()
+    lock_server = Server(args.port, args.N, args.K, args.Y, args.T)
+    lock_server.serve_forever()
