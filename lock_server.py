@@ -7,7 +7,7 @@ Números de aluno: 50006, 50013, 50019
 """
 
 # Zona para fazer importação
-import datetime
+import time
 
 
 ###############################################################################
@@ -105,7 +105,7 @@ class lock_pool:
         de concessão do bloqueio. Liberta os recursos caso o seu tempo de
         concessão tenha expirado.
         """
-        time_now = datetime.datetime.now()
+        time_now = time.time()
         for lock in self.locks:
             if lock.time_valid < time_now:
                 lock.urelease()
@@ -127,7 +127,7 @@ class lock_pool:
         Retorna True em caso de sucesso e False caso contrário.
         """
         if self.__try_lock__(resource_id, client_id, time_limit):
-            lock_return = self.locks[resource_id].lock(client_id, datetime.datetime.now() + datetime.timedelta(seconds=self.T))
+            lock_return = self.locks[resource_id].lock(client_id, time.time() + self.T)
             if lock_return:
                 self.num_blocked += 1
             return lock_return
@@ -179,6 +179,12 @@ class lock_pool:
         passada à função print.
         """
         output = ""
+        for i in range(len(self.locks)):
+            status = self.locks[i].test()
+            if status == "Inativo" or status == "Desbloqueado":
+                output += "recurso {} {}\n".format(i, status.lower())
+            else:
+                output += "recurso {} bloqueado pelo cliente {} até {}\n".format(i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
         #
         # Acrescentar na output uma linha por cada recurso bloqueado, da forma:
         # recurso <número do recurso> bloqueado pelo cliente <id do cliente> até
