@@ -218,15 +218,10 @@ class Server:
     def event_handler(self, sig, frame):
         self.stop_flag = True
 
-    def serve_forever(self):
-        while not self.stop_flag:
-	    comand_number = 0
-            conn_sock, addr = self.tcp_server.accept()
-            print "Ligado a cliente com IP {} e porto {}".format(addr[0], addr[1])
-            # TODO Regueira 
-            # Falta receber mensagens e interpreta-las
-            # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
-	    rcv_message = raw_input("Pff insira o seu pedido/n")
+    def client_message_handler(self,conn_sock,rcv_message):
+    """
+    Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 2ºargumento, ....]
+    """
 	    if re.match(r"^LOCK\ \d+\ \d+",rcv_message):
 		msg_split = re.findall(r"^LOCK\ \d+\ \d+",rcv_message)[0].split(" ")
 		comand_number = 1
@@ -251,7 +246,18 @@ class Server:
 	    elif re.match(r"^STATS-N",rcv_message):
 		msg_split = re.findall(r"^STATS-N",rcv_message)[0].split(" ")
 	    else:
-		print "UNKOWN COMMAND"
+		conn_sock.sendall("UNKOWN COMMAND")
+
+    def serve_forever(self):
+        while not self.stop_flag:
+	    
+            conn_sock, addr = self.tcp_server.accept()
+            print "Ligado a cliente com IP {} e porto {}".format(addr[0], addr[1])
+            # TODO Regueira 
+            # Falta receber mensagens e interpreta-las
+            # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
+	    rcv_message = conn_sock.recv(1024)
+	    client_message_handler(self,conn_sock,rcv_message)
         self.tcp_server.close()
         
 
