@@ -206,11 +206,14 @@ class lock_pool:
 ###############################################################################
 
 # código do programa principal
+
+
 class Server:
     def __init__(self, port, N, K, Y, T):
         self.port = port
         self.lock_pool = lock_pool(N, K, Y, T)
-        self.tcp_server = sock_utils.create_tcp_server_socket('127.0.0.1', port, 1)
+        self.tcp_server = sock_utils.create_tcp_server_socket(
+            '127.0.0.1', port, 1)
         self.stop_flag = False
 
         signal.signal(signal.SIGINT, self.event_handler)
@@ -218,48 +221,51 @@ class Server:
     def event_handler(self, sig, frame):
         self.stop_flag = True
 
-    def client_message_handler(self,conn_sock,rcv_message):
-    	"""
-    	Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 		2ºargumento, ....]
-    	"""
-	if re.match(r"^LOCK\ \d+\ \d+",rcv_message):
-		msg_split = re.findall(r"^LOCK\ \d+\ \d+",rcv_message)[0].split(" ")
-		comand_number = 1
-		client_id = msg_split[1]
-		rsrc_number = msg_split[2]
-	elif re.match(r"^RELEASE\ \d+\ \d+",rcv_message):
-		msg_split = re.findall(r"^RELEASE\ \d+\ \d+",rcv_message)[0].split(" ")
-		comand_number = 2
-		client_id = msg_split[1]
-		rsrc_number = msg_split[2]
-	elif re.match(r"^TEST\ \d+",rcv_message):
-		msg_split = re.findall(r"^TEST\ \d+",rcv_message)[0].split(" ")
-		comand_number = 3
-		rsrc_number = msg_split[1]
-	elif re.match(r"^STATS\ \d+",rcv_message):
-		msg_split = re.findall(r"^STATS\ \d+",rcv_message)[0].split(" ")
-		comand_number = 4
-		rsrc_number = msg_split[1]
-	elif re.match(r"^STATS-Y",rcv_message):
-		msg_split = re.findall(r"^STATS-Y",rcv_message)[0].split(" ")
-		comand_number = 5
-	elif re.match(r"^STATS-N",rcv_message):
-		msg_split = re.findall(r"^STATS-N",rcv_message)[0].split(" ")
-	else:
-		conn_sock.sendall("UNKOWN COMMAND")
+    def client_message_handler(self, conn_sock, rcv_message):
+        """
+        Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 		2ºargumento, ....]
+        """
+        if re.match("LOCK \d+ \d+", rcv_message):
+            client_id, resource_id = re.findall(
+                "LOCK (\d]+ (\d+)", rcv_message)
+            # TODO Implement what to do after
+
+        elif re.match("RELEASE (\d+) (\d+)", rcv_message):
+            client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
+                                                rcv_message)
+            # TODO Implement what to do after
+
+        elif re.match("TEST \d+", rcv_message):
+            resource_id = re.findall("TEST (\d+)", rcv_message)
+            # TODO Implement what to do after
+
+        elif re.match("STATS \d+", rcv_message):
+            resource_id = re.findall("STATS (\d+)", rcv_message)
+            # TODO Implement what to do after
+
+        elif re.match("STATS-Y", rcv_message):
+            # TODO Implement what to do after
+
+        elif re.match("STATS-N", rcv_message):
+            # TODO Implement what to do after
+
+        else:
+            conn_sock.sendall("UNKOWN COMMAND")
 
     def serve_forever(self):
         while not self.stop_flag:
-	    
+
             conn_sock, addr = self.tcp_server.accept()
-            print "Ligado a cliente com IP {} e porto {}".format(addr[0], addr[1])
-            # TODO Regueira 
+            print "Ligado a cliente com IP {} e porto {}".format(
+                addr[0], addr[1])
+            # TODO Regueira
             # Falta receber mensagens e interpreta-las
             # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
-	    rcv_message = conn_sock.recv(1024)
-	    client_message_handler(self,conn_sock,rcv_message)
+            # Qual o tamanho maximo do projeto?
+            rcv_message = sock_utils.receive_all(conn_sock, 50000)
+            client_message_handler(self, conn_sock, rcv_message)
         self.tcp_server.close()
-        
+
 
 if __name__ == "__main__":
     description = "Servidor TCP para gestão de exclusão mútua de recursos."
