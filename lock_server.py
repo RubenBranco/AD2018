@@ -219,33 +219,33 @@ class Server:
         self.stop_flag = True
 
     def client_message_handler(self,conn_sock,rcv_message):
-    """
-    Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 2ºargumento, ....]
-    """
-	    if re.match(r"^LOCK\ \d+\ \d+",rcv_message):
+    	"""
+    	Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 		2ºargumento, ....]
+    	"""
+	if re.match(r"^LOCK\ \d+\ \d+",rcv_message):
 		msg_split = re.findall(r"^LOCK\ \d+\ \d+",rcv_message)[0].split(" ")
 		comand_number = 1
 		client_id = msg_split[1]
 		rsrc_number = msg_split[2]
-	    elif re.match(r"^RELEASE\ \d+\ \d+",rcv_message):
+	elif re.match(r"^RELEASE\ \d+\ \d+",rcv_message):
 		msg_split = re.findall(r"^RELEASE\ \d+\ \d+",rcv_message)[0].split(" ")
 		comand_number = 2
 		client_id = msg_split[1]
 		rsrc_number = msg_split[2]
-	    elif re.match(r"^TEST\ \d+",rcv_message):
+	elif re.match(r"^TEST\ \d+",rcv_message):
 		msg_split = re.findall(r"^TEST\ \d+",rcv_message)[0].split(" ")
 		comand_number = 3
 		rsrc_number = msg_split[1]
-	    elif re.match(r"^STATS\ \d+",rcv_message):
+	elif re.match(r"^STATS\ \d+",rcv_message):
 		msg_split = re.findall(r"^STATS\ \d+",rcv_message)[0].split(" ")
 		comand_number = 4
 		rsrc_number = msg_split[1]
-	    elif re.match(r"^STATS-Y",rcv_message):
+	elif re.match(r"^STATS-Y",rcv_message):
 		msg_split = re.findall(r"^STATS-Y",rcv_message)[0].split(" ")
 		comand_number = 5
-	    elif re.match(r"^STATS-N",rcv_message):
+	elif re.match(r"^STATS-N",rcv_message):
 		msg_split = re.findall(r"^STATS-N",rcv_message)[0].split(" ")
-	    else:
+	else:
 		conn_sock.sendall("UNKOWN COMMAND")
 
     def serve_forever(self):
