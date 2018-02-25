@@ -11,6 +11,7 @@ import time
 import sock_utils
 import argparse
 import signal
+import re
 
 ###############################################################################
 
@@ -219,11 +220,38 @@ class Server:
 
     def serve_forever(self):
         while not self.stop_flag:
+	    comand_number = 0
             conn_sock, addr = self.tcp_server.accept()
             print "Ligado a cliente com IP {} e porto {}".format(addr[0], addr[1])
             # TODO Regueira 
             # Falta receber mensagens e interpreta-las
             # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
+	    rcv_message = raw_input("Pff insira o seu pedido/n")
+	    if re.match(r"^LOCK\ \d+\ \d+",rcv_message):
+		msg_split = re.findall(r"^LOCK\ \d+\ \d+",rcv_message)[0].split(" ")
+		comand_number = 1
+		client_id = msg_split[1]
+		rsrc_number = msg_split[2]
+	    elif re.match(r"^RELEASE\ \d+\ \d+",rcv_message):
+		msg_split = re.findall(r"^RELEASE\ \d+\ \d+",rcv_message)[0].split(" ")
+		comand_number = 2
+		client_id = msg_split[1]
+		rsrc_number = msg_split[2]
+	    elif re.match(r"^TEST\ \d+",rcv_message):
+		msg_split = re.findall(r"^TEST\ \d+",rcv_message)[0].split(" ")
+		comand_number = 3
+		rsrc_number = msg_split[1]
+	    elif re.match(r"^STATS\ \d+",rcv_message):
+		msg_split = re.findall(r"^STATS\ \d+",rcv_message)[0].split(" ")
+		comand_number = 4
+		rsrc_number = msg_split[1]
+	    elif re.match(r"^STATS-Y",rcv_message):
+		msg_split = re.findall(r"^STATS-Y",rcv_message)[0].split(" ")
+		comand_number = 5
+	    elif re.match(r"^STATS-N",rcv_message):
+		msg_split = re.findall(r"^STATS-N",rcv_message)[0].split(" ")
+	    else:
+		print "UNKOWN COMMAND"
         self.tcp_server.close()
         
 
