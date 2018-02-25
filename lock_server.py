@@ -12,6 +12,7 @@ import sock_utils
 import argparse
 import signal
 import re
+import socket as s
 
 ###############################################################################
 
@@ -233,24 +234,41 @@ class Server:
         elif re.match("RELEASE (\d+) (\d+)", rcv_message):
             client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
                                                 rcv_message)
-            # TODO Implement what to do after
-
+            try:
+                exit_code = self.lock_pool.release(int(resource_id), int(client_id))
+                conn_sock.sendall(("OK" if exit_code else "NOK"))
+            except IndexError:
+                conn_sock.sendall("UNKNOWN RESOURCE")
         elif re.match("TEST \d+", rcv_message):
             resource_id = re.findall("TEST (\d+)", rcv_message)
-            # TODO Implement what to do after
+            pass
 
         elif re.match("STATS \d+", rcv_message):
             resource_id = re.findall("STATS (\d+)", rcv_message)
-            # TODO Implement what to do after
-
+            try:
+                stat_num = self.lock_pool.stat(int(resource_id))
+                conn_sock.sendall(stat_num)
+            except IndexError:
+                conn_sock.sendall("UNKNOWN RESOURCE")
+        
         elif re.match("STATS-Y", rcv_message):
-            # TODO Implement what to do after
+            try:
+                conn_sock.sendall(self.lock_pool.stat_y())
+            except s.error as e:
+                pass
 
         elif re.match("STATS-N", rcv_message):
-            # TODO Implement what to do after
+            try:
+                conn_sock.sendall(self.lock_pool.stat_n())
+            except s.error as e:
+                pass
 
         else:
-            conn_sock.sendall("UNKOWN COMMAND")
+            try:
+                conn_sock.sendall("UNKOWN COMMAND")
+            except s.error as e:
+                pass
+        conn_sock.close()
 
     def serve_forever(self):
         while not self.stop_flag:
@@ -263,7 +281,7 @@ class Server:
             # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
             # Qual o tamanho maximo do projeto?
             rcv_message = sock_utils.receive_all(conn_sock, 50000)
-            client_message_handler(self, conn_sock, rcv_message)
+            self.client_message_handler(conn_sock, rcv_message)
         self.tcp_server.close()
 
 
