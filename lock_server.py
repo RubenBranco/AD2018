@@ -117,7 +117,7 @@ class lock_pool:
 
     def __try_lock__(self, resource_id, client_id, time_limit):
         status = self.locks[resource_id].test()
-        if status != 'Inativo' and self.num_blocked < self.Y:
+        if status != 'Inativo' and self.stat_y():
             return True
         return False
 
@@ -177,6 +177,16 @@ class lock_pool:
         Retorna o número de recursos disponíneis em N.
         """
         return self.N - self.num_blocked
+
+    def clear_maxed_locks(self):
+        """
+        Verifica se os recursos não excederam o limite permitido de bloqueios.
+        Se tiverem, são desativados.
+        """
+        for i in range(len(self.locks)):
+            num_blocks = self.stat(i)
+            if num_blocks >= self.K:
+                self.locks[i].disable()
 
     def __repr__(self):
         """
@@ -278,12 +288,15 @@ class Server:
             conn_sock, addr = self.tcp_server.accept()
             print "Ligado a cliente com IP {} e porto {}".format(
                 addr[0], addr[1])
+            self.lock_pool.clear_expired_locks()
+            self.lock_pool.clear_maxed_locks()
             # TODO Regueira
             # Falta receber mensagens e interpreta-las
             # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
             # Qual o tamanho maximo do projeto?
             rcv_message = sock_utils.receive_all(conn_sock, 50000)
             self.client_message_handler(conn_sock, rcv_message)
+            print self.lock_pool
         self.tcp_server.close()
 
 
