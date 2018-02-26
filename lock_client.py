@@ -34,7 +34,7 @@ class Client:
                 client_socket.connect()
                 response = client_socket.send_receive(command)
                 client_socket.close()
-                print "Resposta {}".format(response)
+                print "{}".format(response)
             elif command == "exit":
                 self.active_flag = False
 
