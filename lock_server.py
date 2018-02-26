@@ -202,7 +202,7 @@ class lock_pool:
             else:
                 output += "recurso {} bloqueado pelo cliente {} até {}\n".format(
                     i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
-        
+
         return output
 
 ###############################################################################
@@ -236,7 +236,8 @@ class Server:
             client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
                                                 rcv_message)
             try:
-                exit_code = self.lock_pool.release(int(resource_id), int(client_id))
+                exit_code = self.lock_pool.release(
+                    int(resource_id), int(client_id))
                 conn_sock.sendall(("OK" if exit_code else "NOK"))
             except IndexError:
                 conn_sock.sendall("UNKNOWN RESOURCE")
@@ -251,7 +252,7 @@ class Server:
                 conn_sock.sendall(stat_num)
             except IndexError:
                 conn_sock.sendall("UNKNOWN RESOURCE")
-        
+
         elif re.match("STATS-Y", rcv_message):
             try:
                 conn_sock.sendall(self.lock_pool.stat_y())

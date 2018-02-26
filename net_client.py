@@ -9,7 +9,8 @@ Números de aluno: 50006, 50013, 50019
 
 from sock_utils import create_tcp_client_socket, receive_all
 
-# definição da classe server 
+# definição da classe server
+
 
 class server:
     """
@@ -17,13 +18,14 @@ class server:
     para estabelecer a ligação, para envio de um comando e receção da resposta,
     e para terminar a ligação
     """
+
     def __init__(self, address, port):
         """
         Inicializa a classe com parâmetros para funcionamento futuro.
         """
         self.address = address
         self.port = port
-        
+
     def connect(self):
         """
         Estabelece a ligação ao servidor especificado na inicialização do
@@ -38,7 +40,7 @@ class server:
         """
         self.socket.sendall(data)
         return receive_all(self.socket, 50000)
-    
+
     def close(self):
         """
         Termina a ligação ao servidor.
