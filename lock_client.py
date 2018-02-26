@@ -27,10 +27,10 @@ class Client:
         self.active_flag = False
 
     def client_requests(self):
+		client_socket = net_client.server(self.host, self.port)
         while self.active_flag:
             command = raw_input("comando > ")
             if command and command != "exit":
-                client_socket = net_client.server(self.host, self.port)
                 client_socket.connect()
                 response = client_socket.send_receive(command)
                 client_socket.close()
