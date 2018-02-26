@@ -185,13 +185,6 @@ class lock_pool:
         passada à função print.
         """
         output = ""
-        for i in range(len(self.locks)):
-            status = self.locks[i].test()
-            if status == "Inativo" or status == "Desbloqueado":
-                output += "recurso {} {}\n".format(i, status.lower())
-            else:
-                output += "recurso {} bloqueado pelo cliente {} até {}\n".format(
-                    i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
         #
         # Acrescentar na output uma linha por cada recurso bloqueado, da forma:
         # recurso <número do recurso> bloqueado pelo cliente <id do cliente> até
@@ -202,6 +195,14 @@ class lock_pool:
         # Caso o recurso não esteja inativo a linha é simplesmente da forma:
         # recurso <número do recurso> inativo
         #
+        for i in range(len(self.locks)):
+            status = self.locks[i].test()
+            if status == "Inativo" or status == "Desbloqueado":
+                output += "recurso {} {}\n".format(i, status.lower())
+            else:
+                output += "recurso {} bloqueado pelo cliente {} até {}\n".format(
+                    i, self.locks[i].client, time.ctime(self.locks[i].time_valid))
+        
         return output
 
 ###############################################################################
@@ -215,12 +216,12 @@ class Server:
         self.lock_pool = lock_pool(N, K, Y, T)
         self.tcp_server = sock_utils.create_tcp_server_socket(
             '127.0.0.1', port, 1)
-        self.stop_flag = False
+        self.active_flag = False
 
         signal.signal(signal.SIGINT, self.event_handler)
 
     def event_handler(self, sig, frame):
-        self.stop_flag = True
+        self.active_flag = True
 
     def client_message_handler(self, conn_sock, rcv_message):
         """
@@ -271,7 +272,7 @@ class Server:
         conn_sock.close()
 
     def serve_forever(self):
-        while not self.stop_flag:
+        while self.active_flag:
 
             conn_sock, addr = self.tcp_server.accept()
             print "Ligado a cliente com IP {} e porto {}".format(
