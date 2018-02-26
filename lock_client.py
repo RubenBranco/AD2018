@@ -21,8 +21,9 @@ class Client:
                 self.port = port
 		active = True
 		while active:
-			client_socket = sock_utils.creat_tcp_client_socket(host,port)
 			command = raw_input("comando > ")
+			if command:
+				client_socket = sock_utils.creat_tcp_client_socket(host,port)
 			if command == "exit":
 				active = false
 			else: 
