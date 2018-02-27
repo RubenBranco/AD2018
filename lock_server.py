@@ -226,12 +226,12 @@ class Server:
         self.lock_pool = lock_pool(N, K, Y, T)
         self.tcp_server = sock_utils.create_tcp_server_socket(
             '127.0.0.1', port, 1)
-        self.active_flag = False
+        self.active_flag = True
 
         signal.signal(signal.SIGINT, self.event_handler)
 
     def event_handler(self, sig, frame):
-        self.active_flag = True
+        self.active_flag = False
 
     def client_message_handler(self, conn_sock, rcv_message):
         """
@@ -259,19 +259,19 @@ class Server:
             resource_id = re.findall("STATS (\d+)", rcv_message)
             try:
                 stat_num = self.lock_pool.stat(int(resource_id))
-                conn_sock.sendall(stat_num)
+                conn_sock.sendall(str(stat_num))
             except IndexError:
                 conn_sock.sendall("UNKNOWN RESOURCE")
 
         elif re.match("STATS-Y", rcv_message):
             try:
-                conn_sock.sendall(self.lock_pool.stat_y())
+                conn_sock.sendall(str(self.lock_pool.stat_y()))
             except s.error as e:
                 pass
 
         elif re.match("STATS-N", rcv_message):
             try:
-                conn_sock.sendall(self.lock_pool.stat_n())
+                conn_sock.sendall(str(self.lock_pool.stat_n()))
             except s.error as e:
                 pass
 
@@ -284,19 +284,21 @@ class Server:
 
     def serve_forever(self):
         while self.active_flag:
-
-            conn_sock, addr = self.tcp_server.accept()
-            print "Ligado a cliente com IP {} e porto {}".format(
-                addr[0], addr[1])
-            self.lock_pool.clear_expired_locks()
-            self.lock_pool.clear_maxed_locks()
-            # TODO Regueira
-            # Falta receber mensagens e interpreta-las
-            # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
-            # Qual o tamanho maximo do projeto?
-            rcv_message = sock_utils.receive_all(conn_sock, 50000)
-            self.client_message_handler(conn_sock, rcv_message)
-            print self.lock_pool
+            try:
+                conn_sock, addr = self.tcp_server.accept()
+                print "Ligado a cliente com IP {} e porto {}".format(
+                    addr[0], addr[1])
+                self.lock_pool.clear_expired_locks()
+                self.lock_pool.clear_maxed_locks()
+                # TODO Regueira
+                # Falta receber mensagens e interpreta-las
+                # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
+                # Qual o tamanho maximo do projeto?
+                rcv_message = sock_utils.receive_all(conn_sock, 50000)
+                self.client_message_handler(conn_sock, rcv_message)
+                print self.lock_pool
+            except s.error as e:
+                pass
         self.tcp_server.close()
 
 
