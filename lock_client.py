@@ -21,13 +21,8 @@ class Client:
         self.client_id = client_id
         self.active_flag = True
 
-        signal.signal(signal.SIGINT, self.handler)
-
-    def handler(self, sig, frame):
-        self.active_flag = False
-
     def client_requests(self):
-		client_socket = net_client.server(self.host, self.port)
+        client_socket = net_client.server(self.host, self.port)
         while self.active_flag:
             command = raw_input("comando > ")
             if command and command != "exit":
@@ -49,4 +44,5 @@ if __name__ == "__main__":
     parser.add_argument("id", type=int, metavar="id",
                         help="O id único do cliente")
     args = parser.parse_args()
-    Client(args.host, args.port, args.id)
+    client = Client(args.host, args.port, args.id)
+    client.client_requests()
