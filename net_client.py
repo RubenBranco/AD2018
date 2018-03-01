@@ -8,6 +8,7 @@ Números de aluno: 50006, 50013, 50019
 # zona para fazer importação
 
 from sock_utils import create_tcp_client_socket, receive_all
+import struct, pickle
 
 # definição da classe server
 
@@ -25,6 +26,7 @@ class server:
         """
         self.address = address
         self.port = port
+        self.socket = None # Criado atraves do connect()
 
     def connect(self):
         """
@@ -38,8 +40,10 @@ class server:
         Envia os dados contidos em data para a socket da ligação, e retorna a
         resposta recebida pela mesma socket.
         """
-        self.socket.sendall(data)
-        return receive_all(self.socket, 50000)
+        self.socket.sendall(struct.pack("i", len(data)))
+        self.socket.sendall(pickle.dumps(data, -1))
+        ret_size = struct.unpack("i", receive_all(self.socket, 4))
+        return pickle.loads(receive_all(self.socket, ret_size))
 
     def close(self):
         """

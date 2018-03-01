@@ -13,6 +13,9 @@ import argparse
 import signal
 import re
 import socket as s
+from multiprocessing import Semaphore
+import struct
+import pickle
 
 ###############################################################################
 
@@ -188,6 +191,9 @@ class lock_pool:
             if num_blocks >= self.K:
                 self.locks[i].disable()
 
+    def exists(self, resource_id):
+        return resource_id < len(self.locks)
+
     def __repr__(self):
         """
         Representação da classe para a saída standard. A string devolvida por
@@ -227,6 +233,8 @@ class Server:
         self.tcp_server = sock_utils.create_tcp_server_socket(
             '127.0.0.1', port, 1)
         self.active_flag = True
+        self.sem = Semaphore(1)
+        self.T = T
 
         signal.signal(signal.SIGINT, self.event_handler)
 
@@ -237,50 +245,82 @@ class Server:
         """
         Retorna uma lista com a mensagem dividida nos seguintes parametros [comando recebido, 1º, 		2ºargumento, ....]
         """
+        res = ''
         if re.match("LOCK \d+ \d+", rcv_message):
             client_id, resource_id = re.findall(
                 "LOCK (\d]+ (\d+)", rcv_message)
-            # TODO Implement what to do after
+            if self.lock_pool.exists(int(resource_id)):
+                self.sem.acquire()
+                ret = self.lock_pool.lock(resource_id, client_id, self.T)
+                self.sem.release()
+                res = ("OK" if ret else "NOK")
+            else:
+                res = "UNKNOWN RESOURCE"
 
         elif re.match("RELEASE (\d+) (\d+)", rcv_message):
             client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
                                                 rcv_message)
-            try:
+            if self.lock_pool.exists(int(resource_id)):
+                self.sem.acquire()
                 exit_code = self.lock_pool.release(
                     int(resource_id), int(client_id))
-                conn_sock.sendall(("OK" if exit_code else "NOK"))
-            except IndexError:
-                conn_sock.sendall("UNKNOWN RESOURCE")
+                self.sem.release()
+                res = ("OK" if exit_code else "NOK")
+            else:
+                res = "UNKNOWN RESOURCE"
+
         elif re.match("TEST \d+", rcv_message):
             resource_id = re.findall("TEST (\d+)", rcv_message)
-            pass
+            if self.lock_pool.exists(int(resource_id)):
+                self.sem.acquire()
+                lock_test = self.lock_pool.test(int(resource_id))
+                self.sem.release()
+                if lock_test:
+                    res = "UNLOCKED"
+                else:
+                    self.sem.acquire()
+                    status = self.lock_pool.locks[int(resource_id)].test()
+                    self.sem.release()
+                    if status == "Inativo":
+                        res = "DISABLE"
+                    else:
+                        res = "LOCKED"
+            else:
+                res = "UNKNOWN RESOURCE"
 
         elif re.match("STATS \d+", rcv_message):
             resource_id = re.findall("STATS (\d+)", rcv_message)
-            try:
+            if self.lock_pool.exists(int(resource_id)):
+                self.sem.acquire()
                 stat_num = self.lock_pool.stat(int(resource_id))
-                conn_sock.sendall(str(stat_num))
-            except IndexError:
-                conn_sock.sendall("UNKNOWN RESOURCE")
+                self.sem.release()
+                res = str(stat_num)
+            else:
+                res = "UNKNOWN RESOURCE"
 
         elif re.match("STATS-Y", rcv_message):
-            try:
-                conn_sock.sendall(str(self.lock_pool.stat_y()))
-            except s.error as e:
-                pass
+            self.sem.acquire()
+            stat_y = self.lock_pool.stat_y()
+            self.sem.release()
+            res = str(stat_y)
 
         elif re.match("STATS-N", rcv_message):
-            try:
-                conn_sock.sendall(str(self.lock_pool.stat_n()))
-            except s.error as e:
-                pass
+            self.sem.acquire()
+            stat_n = self.lock_pool.stat_n()
+            self.sem.release()
+            res = str(stat_n)
 
         else:
-            try:
-                conn_sock.sendall("UNKOWN COMMAND")
-            except s.error as e:
-                pass
-        conn_sock.close()
+            res = "UNKOWN COMMAND"
+        try:
+            res_obj = pickle.dumps(res, -1)
+            res_size = struct.pack("i", len(res_obj))
+            conn_sock.sendall(res_size)
+            conn_sock.sendall(res_obj)
+        except s.error as e:
+            pass
+        finally:
+            conn_sock.close()
 
     def serve_forever(self):
         while self.active_flag:
@@ -290,15 +330,14 @@ class Server:
                     addr[0], addr[1])
                 self.lock_pool.clear_expired_locks()
                 self.lock_pool.clear_maxed_locks()
-                # TODO Regueira
-                # Falta receber mensagens e interpreta-las
-                # Podes fazer metodos abaixo para invocares e dares a mensagem para interpretar
-                # Qual o tamanho maximo do projeto?
-                rcv_message = sock_utils.receive_all(conn_sock, 50000)
-                self.client_message_handler(conn_sock, rcv_message)
+                rcv_message_size = struct.unpack("i", sock_utils.receive_all(conn_sock, 4))[0]
+                rcv_message = sock_utils.receive_all(conn_sock, rcv_message_size)
+                self.client_message_handler(conn_sock, pickle.loads(rcv_message))
                 print self.lock_pool
             except s.error as e:
                 pass
+            finally:
+                conn_sock.close()
         self.tcp_server.close()
 
 
