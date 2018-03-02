@@ -120,7 +120,7 @@ class lock_pool:
 
     def __try_lock__(self, resource_id, client_id, time_limit):
         status = self.locks[resource_id].test()
-        if status != 'Inativo' and self.stat_y():
+        if status != 'Inativo' and self.stat_y() < self.Y:
             return True
         return False
 
@@ -248,10 +248,10 @@ class Server:
         res = ''
         if re.match("LOCK \d+ \d+", rcv_message):
             client_id, resource_id = re.findall(
-                "LOCK (\d]+ (\d+)", rcv_message)
+                "LOCK (\d+) (\d+)", rcv_message)[0]
             if self.lock_pool.exists(int(resource_id)):
                 self.sem.acquire()
-                ret = self.lock_pool.lock(resource_id, client_id, self.T)
+                ret = self.lock_pool.lock(int(resource_id), int(client_id), self.T)
                 self.sem.release()
                 res = ("OK" if ret else "NOK")
             else:
@@ -259,7 +259,7 @@ class Server:
 
         elif re.match("RELEASE (\d+) (\d+)", rcv_message):
             client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
-                                                rcv_message)
+                                                rcv_message)[0]
             if self.lock_pool.exists(int(resource_id)):
                 self.sem.acquire()
                 exit_code = self.lock_pool.release(
@@ -270,7 +270,7 @@ class Server:
                 res = "UNKNOWN RESOURCE"
 
         elif re.match("TEST \d+", rcv_message):
-            resource_id = re.findall("TEST (\d+)", rcv_message)
+            resource_id = re.findall("TEST (\d+)", rcv_message)[0]
             if self.lock_pool.exists(int(resource_id)):
                 self.sem.acquire()
                 lock_test = self.lock_pool.test(int(resource_id))
@@ -289,7 +289,7 @@ class Server:
                 res = "UNKNOWN RESOURCE"
 
         elif re.match("STATS \d+", rcv_message):
-            resource_id = re.findall("STATS (\d+)", rcv_message)
+            resource_id = re.findall("STATS (\d+)", rcv_message)[0]
             if self.lock_pool.exists(int(resource_id)):
                 self.sem.acquire()
                 stat_num = self.lock_pool.stat(int(resource_id))
@@ -314,7 +314,7 @@ class Server:
             res = "UNKOWN COMMAND"
         try:
             res_obj = pickle.dumps(res, -1)
-            res_size = struct.pack("i", len(res_obj))
+            res_size = struct.pack("!i", len(res_obj))
             conn_sock.sendall(res_size)
             conn_sock.sendall(res_obj)
         except s.error as e:
@@ -330,7 +330,8 @@ class Server:
                     addr[0], addr[1])
                 self.lock_pool.clear_expired_locks()
                 self.lock_pool.clear_maxed_locks()
-                rcv_message_size = struct.unpack("i", sock_utils.receive_all(conn_sock, 4))[0]
+                size = sock_utils.receive_all(conn_sock, 4, 4)
+                rcv_message_size = struct.unpack("!i", size)[0]
                 rcv_message = sock_utils.receive_all(conn_sock, rcv_message_size)
                 self.client_message_handler(conn_sock, pickle.loads(rcv_message))
                 print self.lock_pool

@@ -40,9 +40,10 @@ class server:
         Envia os dados contidos em data para a socket da ligação, e retorna a
         resposta recebida pela mesma socket.
         """
-        self.socket.sendall(struct.pack("i", len(data)))
-        self.socket.sendall(pickle.dumps(data, -1))
-        ret_size = struct.unpack("i", receive_all(self.socket, 4))
+        data_obj = pickle.dumps(data, -1)
+        self.socket.sendall(struct.pack("!i", len(data_obj)))
+        self.socket.sendall(data_obj)
+        ret_size = struct.unpack("!i", receive_all(self.socket, 4, 4))
         return pickle.loads(receive_all(self.socket, ret_size))
 
     def close(self):

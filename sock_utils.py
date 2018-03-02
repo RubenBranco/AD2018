@@ -32,16 +32,16 @@ def create_tcp_client_socket(address, port):
     return sock
 
 
-def receive_all(socket, length):
+def receive_all(socket, length, buffer_size=1024):
     """Receives all packets, with a maximum length of length"""
     try:
         cur = 0
         msg = ''
         stop = False
         while cur < length and not stop:
-            msg += socket.recv(1024)
-            cur += 1024
-            if len(msg) < 1024:
+            msg += socket.recv(buffer_size)
+            cur += buffer_size
+            if len(msg) < buffer_size:
                 stop = True
         return msg
     except s.error:
