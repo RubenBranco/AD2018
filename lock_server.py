@@ -188,7 +188,7 @@ class lock_pool:
         """
         for i in range(len(self.locks)):
             num_blocks = self.stat(i)
-            if num_blocks >= self.K:
+            if num_blocks >= self.K and self.test(i):
                 self.locks[i].disable()
 
     def exists(self, resource_id):
