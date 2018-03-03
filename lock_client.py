@@ -9,19 +9,29 @@ Números de aluno: 50006, 50013, 50019
 import argparse
 import sock_utils
 import net_client
-import signal
 
 # Programa principal
 
 
 class Client:
     def __init__(self, host, port, client_id):
+        """
+        Instância as variaveis necessárias para o cliente
+
+        Host é um IP de acesso ao servidor
+        Port é a port usada pelo servidor
+        client_id é um id ÚNICO de cliente
+        """
         self.host = host
         self.port = port
         self.client_id = client_id
         self.active_flag = True
 
     def client_requests(self):
+        """
+        Recebe comandos de cliente e envia-os para o servidor,
+        recebendo a resposta e mostrando-a.
+        """
         client_socket = net_client.server(self.host, self.port)
         while self.active_flag:
             command = raw_input("comando > ")

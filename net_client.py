@@ -8,7 +8,8 @@ Números de aluno: 50006, 50013, 50019
 # zona para fazer importação
 
 from sock_utils import create_tcp_client_socket, receive_all
-import struct, pickle
+import struct
+import pickle
 
 # definição da classe server
 
@@ -26,7 +27,7 @@ class server:
         """
         self.address = address
         self.port = port
-        self.socket = None # Criado atraves do connect()
+        self.socket = None  # Criado atraves do connect()
 
     def connect(self):
         """
