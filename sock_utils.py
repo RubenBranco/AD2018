@@ -1,6 +1,5 @@
 import socket as s
 import traceback
-import sys
 
 
 def create_tcp_server_socket(address, port, queue_size):
@@ -12,7 +11,6 @@ def create_tcp_server_socket(address, port, queue_size):
     except s.error:
         sock.close()
         traceback.print_exc()
-        sys.exit(0)
     sock.listen(queue_size)
 
     return sock
@@ -27,7 +25,6 @@ def create_tcp_client_socket(address, port):
     except s.error:
         sock.close()
         traceback.print_exc()
-        sys.exit(0)
 
     return sock
 
@@ -47,4 +44,3 @@ def receive_all(socket, length, buffer_size=1024):
     except s.error:
         socket.close()
         traceback.print_exc()
-        sys.exit(0)

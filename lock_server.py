@@ -14,6 +14,7 @@ import signal
 import re
 import socket as s
 from multiprocessing import Semaphore
+from threading import Thread
 import struct
 import pickle
 
@@ -334,6 +335,7 @@ class Server:
             res_size = struct.pack("!i", len(res_obj))  # tamanho do objeto
             conn_sock.sendall(res_size)
             conn_sock.sendall(res_obj)
+            print self.lock_pool
         except s.error as e:
             pass
         finally:
@@ -355,12 +357,9 @@ class Server:
                 rcv_message_size = struct.unpack("!i", size)[0]
                 rcv_message = sock_utils.receive_all(
                     conn_sock, rcv_message_size)
-                self.client_message_handler(
-                    conn_sock, pickle.loads(rcv_message))
-                print self.lock_pool
+                thread = Thread(target=self.client_message_handler, args=(conn_sock, pickle.loads(rcv_message)))
+                thread.start()
             except s.error as e:
-                pass
-            finally:
                 conn_sock.close()
         self.tcp_server.close()
 
