@@ -55,3 +55,30 @@ LOCK 1 2
 
 Fazer um pedido
 
+Cliente:
+
+##Teste de um recurso
+
+python lock_server.py 9999 4 2 2 2
+python lock_client.py 127.0.0.1 9999 1
+LOCK 1 1
+TEST 1
+DISABLE
+
+##Status de um recurso
+python lock_server.py 9999 4 5 2 10
+python lock_client.py 127.0.0.1 9999 1
+LOCK 1 1
+OK
+LOCK 1 1
+OK
+STATS 1
+2
+
+##Liberta recurso
+python lock_server.py 9999 4 10 2 50
+python lock_client.py 127.0.0.1 9999 1
+LOCK 1 1
+OK
+RELEASE 1 1
+OK
