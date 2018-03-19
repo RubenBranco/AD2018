@@ -48,8 +48,9 @@ class server:
             self.socket.sendall(data_obj)
             ret_size = struct.unpack("!i", receive_all(self.socket, 4, 4))
             return pickle.loads(receive_all(self.socket, ret_size))
-        except s.error as e:
+        except s.error:
             self.close()
+
     def close(self):
         """
         Termina a ligação ao servidor.
