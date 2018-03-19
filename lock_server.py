@@ -26,7 +26,7 @@ class resource_lock:
         """
         Define e inicializa as características de um LOCK num recurso.
         """
-        self.status = 'Inativo'
+        self.status = 'Desbloqueado'
         self.num_blocks = 0
         self.client = None
         self.time_valid = None
@@ -116,8 +116,9 @@ class lock_pool:
         """
         time_now = time.time()
         for lock in self.locks:
-            if lock.time_valid < time_now:
+            if lock.time_valid is not None and lock.time_valid < time_now:
                 lock.urelease()
+                self.num_blocked -= 1
 
     def __try_lock__(self, resource_id, client_id, time_limit):
         status = self.locks[resource_id].test()
