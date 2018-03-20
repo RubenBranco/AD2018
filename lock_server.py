@@ -17,6 +17,8 @@ from multiprocessing import Semaphore
 from threading import Thread
 import struct
 import pickle
+from lock_skel import *
+import select as sel
 
 ###############################################################################
 
@@ -37,6 +39,7 @@ class Server:
         self.active_flag = True
         self.sem = Semaphore(1)  # Semaforo para limite de acessos concorrentes
         self.T = T
+        self.skeleton = LockSkeleton(N, K, Y, T)
 
         signal.signal(signal.SIGINT, self.event_handler)  # CTRL+C Handler
 
@@ -52,86 +55,13 @@ class Server:
         Processa uma mensagem recebida por um cliente e retorna uma resposta para
         o cliente.
         """
-        res = ''  # Resposta ao cliente
-        if re.match("LOCK \d+ \d+", rcv_message):
-            client_id, resource_id = re.findall(
-                "LOCK (\d+) (\d+)", rcv_message)[0]
-            if self.lock_pool.exists(int(resource_id)):
-                self.sem.acquire()
-                ret = self.lock_pool.lock(
-                    int(resource_id), int(client_id), self.T)
-                self.sem.release()
-                res = ("OK" if ret else "NOK")
-            else:
-                res = "UNKNOWN RESOURCE"
-
-        elif re.match("RELEASE (\d+) (\d+)", rcv_message):
-            client_id, resource_id = re.findall("RELEASE (\d+) (\d+)",
-                                                rcv_message)[0]
-            if self.lock_pool.exists(int(resource_id)):
-                self.sem.acquire()
-                exit_code = self.lock_pool.release(
-                    int(resource_id), int(client_id))
-                self.sem.release()
-                res = ("OK" if exit_code else "NOK")
-            else:
-                res = "UNKNOWN RESOURCE"
-
-        elif re.match("TEST \d+", rcv_message):
-            resource_id = re.findall("TEST (\d+)", rcv_message)[0]
-            if self.lock_pool.exists(int(resource_id)):
-                self.sem.acquire()
-                lock_test = self.lock_pool.test(int(resource_id))
-                self.sem.release()
-                if lock_test:
-                    res = "UNLOCKED"
-                else:
-                    # É necessário fazer um teste extra pois o metodo test
-                    # da classe lock pool é ambiguo quando retorna false
-                    # podendo ter 2 possibilidades(inativo ou locked)
-                    self.sem.acquire()
-                    status = self.lock_pool.locks[int(resource_id)].test()
-                    self.sem.release()
-                    if status == "Inativo":
-                        res = "DISABLE"
-                    else:
-                        res = "LOCKED"
-            else:
-                res = "UNKNOWN RESOURCE"
-
-        elif re.match("STATS \d+", rcv_message):
-            resource_id = re.findall("STATS (\d+)", rcv_message)[0]
-            if self.lock_pool.exists(int(resource_id)):
-                self.sem.acquire()
-                stat_num = self.lock_pool.stat(int(resource_id))
-                self.sem.release()
-                res = str(stat_num)
-            else:
-                res = "UNKNOWN RESOURCE"
-
-        elif re.match("STATS-Y", rcv_message):
-            self.sem.acquire()
-            stat_y = self.lock_pool.stat_y()
-            self.sem.release()
-            res = str(stat_y)
-
-        elif re.match("STATS-N", rcv_message):
-            self.sem.acquire()
-            stat_n = self.lock_pool.stat_n()
-            self.sem.release()
-            res = str(stat_n)
-
-        else:
-            res = "UNKOWN COMMAND"
+        response = self.skeleton.message_parser(rcv_message)
+        response_obj = pickle.dumps(response)
+        size = struct.pack("!i", len(response_obj))
         try:
-            res_obj = pickle.dumps(res, -1)  # pickling
-            res_size = struct.pack("!i", len(res_obj))  # tamanho do objeto
-            conn_sock.sendall(res_size)
-            conn_sock.sendall(res_obj)
-            print self.lock_pool
-        except s.error as e:
-            pass
-        finally:
+            conn_sock.sendall(size)
+            conn_sock.sendall(response_obj)
+        except s.error:
             conn_sock.close()
 
     def serve_forever(self):
@@ -139,8 +69,19 @@ class Server:
         Serve clientes eternamente, satisfazendo os pedidos
         (até um evento CTRL+C)
         """
+        socket_list = [self.tcp_server]
         while self.active_flag:
+            r, w, x = sel.select(socket_list, [], [])
+            for sock in r:
+                if sock is self.tcp_server:
+                    conn_sock, addr = sock.accept()
+                    print "Ligado a cliente com IP {} e porto {}".format(
+                    addr[0], addr[1])
+                    socket_list.append(conn_sock)
+                else:
+                    
             try:
+
                 conn_sock, addr = self.tcp_server.accept()
                 print "Ligado a cliente com IP {} e porto {}".format(
                     addr[0], addr[1])

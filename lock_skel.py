@@ -40,7 +40,7 @@ class LockSkeleton:
         code = 21
         exit_response = None
 
-        if self.lock_pool.exists(int(resource_id)):
+        if self.lock_pool.exists(resource_id):
             self.sem.acquire()
             exit_response = self.lock_pool.release(
                 resource_id, client_id)
@@ -52,9 +52,9 @@ class LockSkeleton:
         code = 31
         exit_response = None
 
-        if self.lock_pool.exists(int(resource_id)):
+        if self.lock_pool.exists(resource_id):
             self.sem.acquire()
-            lock_test = self.lock_pool.test(int(resource_id))
+            lock_test = self.lock_pool.test(resource_id)
             self.sem.release()
             if lock_test:
                 exit_response = True
@@ -63,7 +63,7 @@ class LockSkeleton:
                 # da classe lock pool é ambiguo quando retorna false
                 # podendo ter 2 possibilidades(inativo ou locked)
                 self.sem.acquire()
-                status = self.lock_pool.locks[int(resource_id)].test()
+                status = self.lock_pool.locks[resource_id].test()
                 self.sem.release()
                 if status == "Inativo":
                     exit_response = "disable"
@@ -78,7 +78,7 @@ class LockSkeleton:
 
         if self.lock_pool.exists(int(resource_id)):
             self.sem.acquire()
-            stat_num = self.lock_pool.stat(int(resource_id))
+            stat_num = self.lock_pool.stat(resource_id)
             self.sem.release()
             exit_response = stat_num
 
