@@ -1,7 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 """
-Aplicações distribuídas - Projeto 1 - lock_client.py
+Aplicações distribuídas - Projeto 2 - lock_stub.py
 Grupo: ad007
 Números de aluno: 50006, 50013, 50019
 """
@@ -15,6 +16,7 @@ class LockStub:
 
     def connect(self, host, port):
         self.socket = net_client.server(host, port)
+        self.socket.connect()
     
     def disconnect(self):
         self.socket.close()

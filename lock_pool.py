@@ -1,5 +1,13 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import time
 
+"""
+Aplicações distribuídas - Projeto 2 - lock_pool.py
+Grupo: ad007
+Números de aluno: 50006, 50013, 50019
+"""
 
 class resource_lock:
     def __init__(self):

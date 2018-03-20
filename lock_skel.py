@@ -1,3 +1,12 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+Aplicações distribuídas - Projeto 2 - lock_skel.py
+Grupo: ad007
+Números de aluno: 50006, 50013, 50019
+"""
+
 from lock_pool import *
 from multiprocessing import Semaphore
 
@@ -93,3 +102,9 @@ class LockSkeleton:
         code = 61
         exit_response = self.lock_pool.stat_n()
         return [code, exit_response]
+
+    def clear_expired_locks(self):
+        self.lock_pool.clear_expired_locks()
+    
+    def clear_maxed_locks(self):
+        self.lock_pool.clear_maxed_locks()
