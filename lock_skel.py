@@ -108,3 +108,6 @@ class LockSkeleton:
     
     def clear_maxed_locks(self):
         self.lock_pool.clear_maxed_locks()
+
+    def print_lock_state(self):
+        print self.lock_pool

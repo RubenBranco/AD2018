@@ -29,21 +29,21 @@ class Client:
     
     def message_parser(self, message):
         ret = "UNKNOWN COMMAND"
-        if re.match("LOCK \d+", message):
-            resource_id = re.findall("LOCK (\d+)", message)[0]
+        if re.match(r"LOCK \d+", message) is not None:
+            resource_id = re.findall(r"LOCK (\d+)", message)[0]
             ret = self.stub.lock(self.client_id, int(resource_id))
-        elif re.match("RELEASE \d+", message):
-            resource_id = re.findall("LOCK (\d+)", message)[0]
+        elif re.match(r"RELEASE \d+", message):
+            resource_id = re.findall(r"RELEASE (\d+)", message)[0]
             ret = self.stub.release(self.client_id, int(resource_id))
-        elif re.match("TEST \d+", message):
-            resource_id = re.findall("TEST (\d+)", message)[0]
+        elif re.match(r"TEST \d+", message):
+            resource_id = re.findall(r"TEST (\d+)", message)[0]
             ret = self.stub.test(int(resource_id))
-        elif re.match("STATS \d+", message):
-            resource_id = re.findall("STATS (\d+)", message)[0]
+        elif re.match(r"STATS \d+", message):
+            resource_id = re.findall(r"STATS (\d+)", message)[0]
             ret = self.stub.stats(int(resource_id))
-        elif re.match("STATS-Y", message):
+        elif re.match(r"STATS-Y", message):
             ret = self.stub.stats_y()
-        elif re.match("STATS-N", message):
+        elif re.match(r"STATS-N", message):
             ret = self.stub.stats_n()
         return ret
 
