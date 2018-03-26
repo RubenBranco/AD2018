@@ -4,11 +4,17 @@ import traceback
 
 def create_tcp_server_socket(address, port, queue_size):
     """Create a TCP socket for a server"""
-    sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+    
+    try:
+        sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+
+    except s.error as e:
+        print "Erro ao criar socket: %s" % e
 
     try:
         sock.bind((address, port))
-    except s.error:
+    except s.error as e:
+        print "Erro ao ligar socket: %s" % e
         sock.close()
         traceback.print_exc()
     sock.listen(queue_size)
@@ -18,11 +24,16 @@ def create_tcp_server_socket(address, port, queue_size):
 
 def create_tcp_client_socket(address, port):
     """Create TCP Socket for a client"""
-    sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+    try:
+        sock = s.socket(s.AF_INET, s.SOCK_STREAM)
+
+    except s.error as e:
+        print "Erro ao criar socket: %s" % e
 
     try:
         sock.connect((address, port))
-    except s.error:
+    except s.error as e:
+        print "Erro ao conectar o socket: %s" % e
         sock.close()
         traceback.print_exc()
 
@@ -41,6 +52,7 @@ def receive_all(socket, length, buffer_size=1024):
             if len(msg) < buffer_size:
                 stop = True
         return msg
-    except s.error:
+    except s.error as e:
+        print "Erro a receber a informação: %s" % e
         socket.close()
         traceback.print_exc()

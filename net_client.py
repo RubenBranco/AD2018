@@ -48,7 +48,8 @@ class server:
             self.socket.sendall(data_obj)
             ret_size = struct.unpack("!i", receive_all(self.socket, 4, 4))
             return pickle.loads(receive_all(self.socket, ret_size))
-        except s.error:
+        except s.error as e:
+            print "Erro a enviar a informação: %s" % e
             self.close()
 
     def close(self):
