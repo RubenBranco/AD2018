@@ -16,20 +16,33 @@ from lock_skel import *
 import SocketServer
 import select as sel
 import signal
+from threading import Thread
+import sys
 
 ###############################################################################
 
 # código do programa principal
 
 class MessageHandler(SocketServer.BaseRequestHandler):
+    """
+    Handler para mensagens de clientes
+    """
+
     def setup(self):
+        """
+        Setup do handle.
+        """
         addr, port = self.request.getpeername()
         print "Ligado a cliente com IP {} e porto {}".format(addr, port)
         
     def handle(self):
+        """
+        Handling das mensagens.
+        """
         global skeleton
         continue_flag = True
-        while continue_flag:
+        global server_up
+        while continue_flag and server_up:
             r, w, x = sel.select([self.request], [], [])
             for sock in r:
                 size = sock_utils.receive_all(sock, 4, 4)
@@ -45,6 +58,9 @@ class MessageHandler(SocketServer.BaseRequestHandler):
                     print "Cliente com IP {} e porto {} fechou a ligação".format(addr, port)
                     sock.close()
                     continue_flag = False
+    
+    def finish(self):
+        self.request.close()
 
     def client_message_handler(self, conn_sock, rcv_message):
         """
@@ -72,22 +88,46 @@ class Server:
         *args descritos na classe lock_pool.
         """
         self.port = port
-        self.tcp_server = SocketServer.ThreadingTCPServer(('127.0.0.1', port), MessageHandler)
-        
+        try:
+            self.tcp_server = SocketServer.ThreadingTCPServer(('127.0.0.1', port), MessageHandler)
+        except s.error:
+            print "Erro ao criar servidor TCP."
         global skeleton
         skeleton = LockSkeleton(N, K, Y, T)
+        global server_up
+        server_up = True
 
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        #signal.signal(signal.SIGINT, self.shutdown)
 
     def serve_forever(self):
         """
         Serve clientes eternamente, satisfazendo os pedidos
         (até um evento CTRL+C)
         """
-        self.tcp_server.serve_forever()
+        try:
+            self.tcp_server.serve_forever()
+        except:
+            print "Erro ao tentar servir para sempre, servidor tcp está indisponivel"     
 
-    def shutdown(self, signal, frame):
+    def shutdown(self):
+        """
+        Desliga o servidor.
+        """
+        global server_up
+        server_up = False
         self.tcp_server.shutdown()
+
+
+def stdinReader(server):
+    cont = True
+    if hasattr(server, 'tcp_server'):
+        while cont:
+            r, w, x = sel.select([sys.stdin], [], [])
+            for sock in r:
+                msg = sock.readline()
+                if msg == 'exit\n':
+                    cont = False
+                    server.shutdown()
 
 
 if __name__ == "__main__":
@@ -105,4 +145,6 @@ if __name__ == "__main__":
                         help="Tempo de concessão (em segundos) dos bloqueios.")
     args = parser.parse_args()
     lock_server = Server(args.port, args.N, args.K, args.Y, args.T)
+    thread = Thread(target=stdinReader, args=(lock_server, ))
+    thread.start()  
     lock_server.serve_forever()

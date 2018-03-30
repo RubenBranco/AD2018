@@ -1,47 +1,54 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import socket as s
-import traceback
 
 
 def create_tcp_server_socket(address, port, queue_size):
-    """Create a TCP socket for a server"""
+    """
+    Cria um socket TCP para servidor.
+    """
     
     try:
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
 
-    except s.error as e:
-        print "Erro ao criar socket: %s" % e
+    except s.error:
+        print "Erro ao criar socket de servidor"
 
     try:
         sock.bind((address, port))
-    except s.error as e:
-        print "Erro ao ligar socket: %s" % e
+    except s.error:
+        print "Erro ao tentar ligar ao IP e porto, pode ainda estar em uso"
         sock.close()
-        traceback.print_exc()
     sock.listen(queue_size)
 
     return sock
 
 
 def create_tcp_client_socket(address, port):
-    """Create TCP Socket for a client"""
+    """
+    Cria um socket TCP para cliente.
+    """
     try:
         sock = s.socket(s.AF_INET, s.SOCK_STREAM)
 
-    except s.error as e:
-        print "Erro ao criar socket: %s" % e
+    except s.error:
+        print "Erro ao criar socket de cliente"
 
     try:
         sock.connect((address, port))
-    except s.error as e:
-        print "Erro ao conectar o socket: %s" % e
+
+    except s.error:
+        print "Erro ao tentar conectar com o servidor."
         sock.close()
-        traceback.print_exc()
 
     return sock
 
 
 def receive_all(socket, length, buffer_size=1024):
-    """Receives all packets, with a maximum length of length"""
+    """
+    Recebe todos os pacotes, com um tamanho total definido.
+    """
     try:
         cur = 0
         msg = ''
@@ -52,7 +59,6 @@ def receive_all(socket, length, buffer_size=1024):
             if len(msg) < buffer_size:
                 stop = True
         return msg
-    except s.error as e:
-        print "Erro a receber a informação: %s" % e
+    except s.error:
+        print "Erro ao receber dados."
         socket.close()
-        traceback.print_exc()

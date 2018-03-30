@@ -1,6 +1,8 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 """
-Aplicações distribuídas - Projeto 1 - net_client.py
+Aplicações distribuídas - Projeto 2 - net_client.py
 Grupo: ad007
 Números de aluno: 50006, 50013, 50019
 """
@@ -48,8 +50,8 @@ class server:
             self.socket.sendall(data_obj)
             ret_size = struct.unpack("!i", receive_all(self.socket, 4, 4))
             return pickle.loads(receive_all(self.socket, ret_size))
-        except s.error as e:
-            print "Erro a enviar a informação: %s" % e
+        except s.error:
+            print "Erro ao enviar/receber dados, o canal ou outra parte morreu"
             self.close()
 
     def close(self):

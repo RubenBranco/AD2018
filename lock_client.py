@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+
 """
-Aplicações distribuídas - Projeto 1 - lock_client.py
+Aplicações distribuídas - Projeto 2 - lock_client.py
 Grupo: ad007
 Números de aluno: 50006, 50013, 50019
 """
+
 # Zona para fazer imports
 import argparse
 from lock_stub import *
@@ -26,10 +28,15 @@ class Client:
         self.port = port
         self.client_id = client_id
         self.active_flag = True
-    
+
     def message_parser(self, message):
+        """
+        Interpreta a mensagem do cliente e escolhe a operação correta.
+        """
+
         ret = "UNKNOWN COMMAND"
-        if re.match(r"LOCK \d+", message) is not None:
+
+        if re.match(r"LOCK \d+", message):
             resource_id = re.findall(r"LOCK (\d+)", message)[0]
             ret = self.stub.lock(self.client_id, int(resource_id))
         elif re.match(r"RELEASE \d+", message):
@@ -45,6 +52,7 @@ class Client:
             ret = self.stub.stats_y()
         elif re.match(r"STATS-N", message):
             ret = self.stub.stats_n()
+
         return ret
 
     def client_requests(self):
