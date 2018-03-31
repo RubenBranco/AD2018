@@ -94,6 +94,7 @@ class lock_pool:
         self.K = K
         self.Y = Y
         self.num_blocked = 0
+        self.num_inactive = 0
         self.T = T
 
     def clear_expired_locks(self):
@@ -169,7 +170,7 @@ class lock_pool:
         """
         Retorna o número de recursos disponíneis em N.
         """
-        return self.N - self.num_blocked
+        return self.N - self.num_blocked - self.num_inactive
 
     def clear_maxed_locks(self):
         """
@@ -180,6 +181,7 @@ class lock_pool:
             num_blocks = self.stat(i)
             if num_blocks >= self.K and self.test(i):
                 self.locks[i].disable()
+                self.num_inactive += 1
 
     def exists(self, resource_id):
         """

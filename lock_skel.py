@@ -104,10 +104,14 @@ class LockSkeleton:
         return [code, exit_response]
 
     def clear_expired_locks(self):
+        self.sem.acquire()
         self.lock_pool.clear_expired_locks()
-    
-    def clear_maxed_locks(self):
-        self.lock_pool.clear_maxed_locks()
+        self.sem.release()
 
+    def clear_maxed_locks(self):
+        self.sem.acquire()
+        self.lock_pool.clear_maxed_locks()
+        self.sem.release()
+        
     def print_lock_state(self):
         print self.lock_pool
