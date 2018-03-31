@@ -126,9 +126,10 @@ class lock_pool:
         Retorna True em caso de sucesso e False caso contrário.
         """
         if self.__try_lock__(resource_id, client_id, time_limit):
+            past_status = self.locks[resource_id].test()
             lock_return = self.locks[resource_id].lock(
                 client_id, time.time() + self.T)
-            if lock_return:
+            if lock_return and past_status == 'Desbloqueado':
                 self.num_blocked += 1
             return lock_return
         return False
