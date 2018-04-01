@@ -7,3 +7,5 @@ As funcionalidades foram implementadas de acordo com a especificação do enunci
 Algo relevante de mencionar será a limitação de saída do servidor. Quando se executa o servidor, há um listener de stdin que escuta por uma mensagem 'exit'.
 Devido à natureza de um threading TCP server, o servidor só irá realmente fechar quando todos os clientes se desliguem. Portanto não é imediatamente após a mensagem.
 
+Também devido ao select a um sys.stdin, este não funciona no Windows.
+
