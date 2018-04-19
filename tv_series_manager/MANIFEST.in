@@ -1,0 +1,3 @@
+graft tv_series_manager/templates
+graft tv_series_manager/static
+include tv_series_manager/schema.sql
