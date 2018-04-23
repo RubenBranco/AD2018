@@ -61,25 +61,55 @@ def fecha_db(error):
 
 @app.route('/')
 @app.route('/utilizadores', methods=["POST", "GET"])
-@app.route('/utilizadores/<int:id>', methods=["GET", "PUT"])
+@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH"])
 def users(id=None):
     res = ''
     if request.method == "GET":
         if id is not None:
             query = "SELECT * FROM users WHERE id=?"
-            res = {"data": query_db(query, [id])}
+            res = {"items": [{"data": query_db(query, [id])}]}
         else:
             query = "SELECT * FROM users"
-            res = {"data": query_db(query)}
+            res = {"items": [{"data": query_db(query)}]}
     elif request.method == "POST":
         data = request.data
-        query_db("INSERT INTO users VALUES (?, ?, ?, ?)", [data["name"], data["username"], data["password"]])
+        query = "INSERT INTO users VALUES (?,?,?,?)"
+        idnum = query_db("SELECT id FROM users WHERE id=(SELECT max(id) FROM users)")
+        if not idnum:
+            idnum = 0
+        else:
+            idnum = idnum[0]
+        query_db(query, [idnum, data["name"], data["username"], data["password"]])
+        res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
+    elif request.method == "PATCH":
+        data = request.data
+        query_update = "UPDATE users SET password=? WHERE id=?"
+        query_select = "SELECT * FROM users WHERE id=?"
+        query_db(query_update, [data["id"], data["password"]])
+        new_line = query_db(query_select, [data["id"]], one=True)
+        res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
 
 @app.route('/series', methods=["POST", "GET"])
 @app.route('/series/<int:id>', methods=["GET", "PUT"])
 def series(id=None):
-    pass
+    res = ''
+    if request.method == "POST":
+        data = request.data
+        idnum = query_db("SELECT id FROM serie WHERE id=(SELECT max(id) FROM serie)")
+        if not idnum:
+            idnum = 0
+        else:
+            idnum = idnum[0]
+        query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
+        category_id = query_db("SELECT id from category WHERE name=?", [data["category"]], one=True)
+        query_db(query, [idnum, data["name"], data["date"], data["synopse"], category_id])
+        res = {"items": [{"href": "/series/{}".format(idnum)}]}
+    if request.method == "GET":
+        if id is None:
+            query = "SELECT * FROM serie"
+            res = {"items": [{"data": query_db(query)}]}
+    return make_response(json.dumps(res))
 
 @app.route('/episodios', methods=["POST", "GET"])
 @app.route('/series/<int:id>', methods=["GET", "PUT"])

@@ -26,4 +26,4 @@ def message_parser(message):
     return ret
 
 if __name__ == "__main__":
-    r = requests.get("http://localhost:5000/utilizadores")
+    r = requests.post("http://localhost:5000/utilizadores")
