@@ -66,9 +66,8 @@ def fecha_db(error):
 
 @app.route('/')
 @app.route('/utilizadores', methods=["POST", "GET"])
-@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH", "POST"])
-@app.route('/utilizadores/<int:id>/<int:serie_id>', methods=["PATCH"])
-def users(id=None, serie_id=None):
+@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH"])
+def users(id=None):
     res = ''
     data = json.loads(request.data)
     if request.method == "GET":
@@ -79,60 +78,67 @@ def users(id=None, serie_id=None):
             query = "SELECT * FROM users"
             res = {"items": [{"data": query_db(query)}]}
     elif request.method == "POST":
-        if id is None:
-            query = "INSERT INTO users VALUES (?,?,?,?)"
-            idnum = query_db("SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
-            if not idnum:
-                idnum = 0
-            else:
-                idnum += 1
-            execute_db(query, [idnum, data["name"], data["username"], data["password"]])
-            res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
-        else:
-            query = "INSERT INTO list_series VALUES (?,?,?)"
-            classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
-            execute_db(query, [id, classification_id, data["serie_id"]])
-            res = {"items": [{"href": "/utilizadores/{}/{}".format(id, data["serie_id"])}]}
-    elif request.method == "PATCH":
-        if serie_id is None:
-            query_update = "UPDATE users SET password=? WHERE id=?"
-            query_select = "SELECT * FROM users WHERE id=?"
-            execute_db(query_update, [data["password"], data["id"]])
-            new_line = query_db(query_select, [data["id"]], one=True)
-            res = {"items": [{"data": new_line}]}
-        else:
-            query_update = "UPDATE list_series SET classification_id=? WHERE user_id=? AND serie_id=?"
-            classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
-            query_select = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
-            execute_db(query_update, [classification_id, id, serie_id])
-            new_line = query_db(query_select, [id, serie_id], one=True)
-            res = {"items": [{"data": new_line}]}
-    return make_response(json.dumps(res))
-
-@app.route('/series', methods=["POST", "GET"])
-@app.route('/series/<int:id>', methods=["GET", "PUT"])
-def series(id=None):
-    res = ''
-    data = json.loads(request.data)
-    if request.method == "POST":
-        idnum = query_db("SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)")
+        query = "INSERT INTO users VALUES (?,?,?,?)"
+        idnum = query_db("SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
         if not idnum:
             idnum = 0
         else:
             idnum += 1
-        query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
-        category_id = query_db("SELECT id from category WHERE name=?", [data["category"]], one=True)
-        execute_db(query, [idnum, data["name"], data["start_date"], data["synopse"], category_id])
-        res = {"items": [{"href": "/series/{}".format(idnum)}]}
+        execute_db(query, [idnum, data["name"], data["username"], data["password"]])
+        res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
+    elif request.method == "PATCH":
+        query = "UPDATE users SET password=? WHERE id=?"
+        execute_db(query, [data["password"], data["user_id"]])
+        new_line = query_db("SELECT * FROM users WHERE id=?", [data["user_id"]], one=True)
+        res = {"items": [{"data": new_line}]}
+    return make_response(json.dumps(res))
+
+@app.route('/series', methods=["POST", "GET"])
+@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH"])
+def series(id=None):
+    res = ''
+    data = json.loads(request.data)
+    if request.method == "POST":
+        if id is None:
+            idnum = query_db("SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)")
+            if not idnum:
+                idnum = 0
+            else:
+                idnum += 1
+            query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
+            category_id = query_db("SELECT id from category WHERE name=?", [data["category"]], one=True)
+            execute_db(query, [idnum, data["name"], data["start_date"], data["synopse"], category_id])
+            res = {"items": [{"href": "/series/{}".format(idnum)}]}
+        else:
+            query = "INSERT INTO list_series VALUES (?,?,?)"
+            classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
+            execute_db(query, [data["user_id"], classification_id, id])
+            res = {"items": [{"href": "/series/{}".format(id), "op": "list_series"}]}
     elif request.method == "GET":
         if id is None:
-            query = "SELECT * FROM serie"
-            res = {"items": [{"data": query_db(query)}]}
-    
+            if "op" not in data:
+                query = "SELECT * FROM serie"
+                res = {"items": [{"data": query_db(query)}]}
+            else:
+                if "op" == "ALL SERIE_U":
+                    query = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
+                    res = {"items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
+                elif "op" == "ALL SERIE_C":
+                    query = "SELECT * FROM serie WHERE category_id=?"
+                    res = {"items": [{"data": query_db(query, [data["category_id"]])}]}
+        else:
+            query = "SELECT * FROM serie WHERE id=?"
+            res = {"items": [{"data": query_db(query, [id], one=True)}]}
+    elif request.method == "PATCH":
+        query = "UPDATE list_series SET classification_id=? WHERE user_id=? AND serie_id=?"
+        query_select = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
+        classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
+        execute_db(query, [classification_id, data["user_id"], data["serie_id"]])
+        res = {"items": [{"data": query_db(query_select, [data["user_id"], data["serie_id"]], one=True)}]}
     return make_response(json.dumps(res))
 
 @app.route('/episodios', methods=["POST", "GET"])
-@app.route('/episodios/<int:id>', methods=["GET", "PUT"])
+@app.route('/episodios/<int:id>', methods=["GET"])
 def episodios(id=None):
     res = ''
     data = json.loads(request.data)
@@ -146,8 +152,12 @@ def episodios(id=None):
         execute_db(query, [idnum, data["name"], data["description"], data["serie_id"]])
         res = {"items": [{"href": "/episodios/{}".format(idnum)}]}
     elif request.method == "GET":
-        query_select = "SELECT * FROM episode WHERE id=?"
-        res = {"items": [{"data": query_db(query_select, [id], one=True)}]}
+        if id is not None:
+            query_select = "SELECT * FROM episode WHERE id=?"
+            res = {"items": [{"data": query_db(query_select, [id], one=True)}]}
+        else:
+            query = "SELECT * FROM episode"
+            res = {"items": [{"data": query_db(query)}]}
     return make_response(json.dumps(res))
 
 if __name__ == "__main__":
