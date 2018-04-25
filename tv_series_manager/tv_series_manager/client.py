@@ -21,9 +21,9 @@ def message_parser(message):
         elif re.match(r"ADD SERIE \d+", message):
             return request.post("/series",json={"nome_serie":elements[2],"data_inicio":elements[3],"synopse":elements[4],"id_serie":elements[5]})
         elif re.match(r"ADD EPISODIO \d+", message):
-            return request.post('/episodios',json{"nome_epis":elements[2],"descri":elements[3],"id_serie":elements[4]})
+            return request.post('/episodios',json = {"nome_epis":elements[2],"descri":elements[3],"id_serie":elements[4]})
         elif re.match(r"ADD \d+", message):
-            #NOT YET DONE
+            print "NOT YET DONE"
             #return {"id_user":elements[1],"id_serie":elements[2],"init_classific":elements[3]}
     elif re.match(r"REMOVE \d+", message):
         if re.match(r"REMOVE USER \d+", message):
@@ -32,8 +32,13 @@ def message_parser(message):
             return request.delete('/series/'+ int(elements[2]))
         elif re.match(r"REMOVE EPISODIO \d+", message):
             return request.delete('/episodios/'+ int(elements[2]))
-        elif re.match(r"REMOVE ALL \d+", message):
-            return request.delete
+        elif re.match(r"REMOVE ALL USERS \d+", message):
+            return request.delete('/utilizadores')
+        elif re.match(r"REMOVE ALL SERIE \d+", message):
+            return request.delete('/series')
+        elif re.match(r"REMOVE ALL EPISODIO \d+", message):
+            return request.delete('/episodios')
+
     elif re.match(r"SHOW \d+", message):
         pass
     elif re.match(r"UPDATE \d+", message):
