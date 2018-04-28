@@ -65,8 +65,8 @@ def fecha_db(error):
         g.sqlite_db.close()
 
 @app.route('/')
-@app.route('/utilizadores', methods=["POST", "GET"])
-@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH"])
+@app.route('/utilizadores', methods=["POST", "GET","DELETE"])
+@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH","DELETE"])
 def users(id=None):
     res = ''
     data = json.loads(request.data)
@@ -78,23 +78,32 @@ def users(id=None):
             query = "SELECT * FROM users"
             res = {"items": [{"data": query_db(query)}]}
     elif request.method == "POST":
-        query = "INSERT INTO users VALUES (?,?,?,?)"
+        1query = "INSERT INTO users VALUES (?,?,?,?)"
         idnum = query_db("SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
         if not idnum:
             idnum = 0
-        else:
+        else:g
             idnum += 1
         execute_db(query, [idnum, data["name"], data["username"], data["password"]])
         res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
     elif request.method == "PATCH":
         query = "UPDATE users SET password=? WHERE id=?"
-        execute_db(query, [data["password"], data["user_id"]])
-        new_line = query_db("SELECT * FROM users WHERE id=?", [data["user_id"]], one=True)
+        execute_db(query, [data["password"], id])
+        new_line = query_db("SELECT * FROM users WHERE id=?", [id], one=True)
+        res = {"items": [{"data": new_line}]}
+    elif request.method == "DELETE":
+        if id is not None:
+            query = "DELETE * FROM users WHERE id=?"
+            execute_db(query,[id])
+        else:
+            query = "DELETE * FROM users"
+            execute_db(query)
+        new_line = query_db("SELECT * FROM users")
         res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
 
-@app.route('/series', methods=["POST", "GET"])
-@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH"])
+@app.route('/series', methods=["POST", "GET","DELETE"])
+@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH","DELETE"])
 def series(id=None):
     res = ''
     data = json.loads(request.data)
@@ -120,10 +129,10 @@ def series(id=None):
                 query = "SELECT * FROM serie"
                 res = {"items": [{"data": query_db(query)}]}
             else:
-                if "op" == "ALL SERIE_U":
+                if "op" == "SERIE_U":
                     query = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
                     res = {"items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
-                elif "op" == "ALL SERIE_C":
+                elif "op" == "SERIE_C":
                     query = "SELECT * FROM serie WHERE category_id=?"
                     res = {"items": [{"data": query_db(query, [data["category_id"]])}]}
         else:
@@ -134,11 +143,28 @@ def series(id=None):
         query_select = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
         classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
         execute_db(query, [classification_id, data["user_id"], data["serie_id"]])
-        res = {"items": [{"data": query_db(query_select, [data["user_id"], data["serie_id"]], one=True)}]}
+        res = {"items": [{"data": query_db(query_select, [data["user_id"], id], one=True)}]}
+    elif request.method == "DELETE":
+        if "op" not in data:
+            if id is not None:
+                query = "DELETE * FROM series WHERE id=?"
+                execute_db(query,[id])
+            else:
+                query = "DELETE * FROM series"
+                execute_db(query)
+            new_line = query_db("SELECT * FROM series")
+            res = {"items": [{"data": new_line}]}
+        else:
+            if "op" == "SERIE_U":
+                query = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
+                res = {"items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
+            elif "op" == "SERIE_C":
+                query = "SELECT * FROM serie WHERE category_id=?"
+                res = {"items": [{"data": query_db(query, [data["category_id"]])}]}
     return make_response(json.dumps(res))
 
-@app.route('/episodios', methods=["POST", "GET"])
-@app.route('/episodios/<int:id>', methods=["GET"])
+@app.route('/episodios', methods=["POST", "GET","DELETE"])
+@app.route('/episodios/<int:id>', methods=["GET","DELETE"])
 def episodios(id=None):
     res = ''
     data = json.loads(request.data)
@@ -158,6 +184,15 @@ def episodios(id=None):
         else:
             query = "SELECT * FROM episode"
             res = {"items": [{"data": query_db(query)}]}
+    elif request.method == "DELETE":
+        if id is not None:
+            query = "DELETE * FROM episode WHERE id=?"
+            execute_db(query,[id])
+        else:
+            query = "DELETE * FROM episode"
+            execute_db(query)
+        new_line = query_db("SELECT * FROM episode")
+        res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
 
 if __name__ == "__main__":
