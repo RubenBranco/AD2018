@@ -1,16 +1,17 @@
 # -*- coding:utf-8 -*-
-#imports
+# imports
 from __future__ import print_function
 import os
 import sqlite3
 from flask import Flask, request, session, g, redirect, url_for, abort, \
-     render_template, flash, make_response
+    render_template, flash, make_response
 import sys
 import json
 
 
-app = Flask(__name__) # cria instancia da aplicacao
-app.config.from_object(__name__) # carrega o ficheiro de config deste ficheiro , series_manager.py
+app = Flask(__name__)  # cria instancia da aplicacao
+# carrega o ficheiro de config deste ficheiro , series_manager.py
+app.config.from_object(__name__)
 
 # Carrega a config default e faz override a config de uma environment variable
 app.config.update(dict(
@@ -21,6 +22,7 @@ app.config.update(dict(
 ))
 
 app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+
 
 def connect_db():
     """
@@ -38,6 +40,7 @@ def connect_db():
         conn.commit()
     return conn
 
+
 def get_db():
     """
     Abre uma nova conexão à base de dados se ainda não houver
@@ -47,16 +50,19 @@ def get_db():
         g.sqlite_db = connect_db()
     return g.sqlite_db
 
+
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+
 def execute_db(query, args=()):
     conn = get_db()
     conn.cursor().execute(query, args)
     conn.commit()
+
 
 @app.teardown_appcontext
 def fecha_db(error):
@@ -64,9 +70,17 @@ def fecha_db(error):
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
+
+def exists(query, args=()):
+    fetch = query_db(query, args, one=True)
+    if fetch:
+        return True
+    return False
+
+
 @app.route('/')
-@app.route('/utilizadores', methods=["POST", "GET","DELETE"])
-@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH","DELETE"])
+@app.route('/utilizadores', methods=["POST", "GET", "DELETE"])
+@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH", "DELETE"])
 def users(id=None):
     res = ''
     data = json.loads(request.data)
@@ -78,14 +92,21 @@ def users(id=None):
             query = "SELECT * FROM users"
             res = {"items": [{"data": query_db(query)}]}
     elif request.method == "POST":
-        1query = "INSERT INTO users VALUES (?,?,?,?)"
-        idnum = query_db("SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
-        if not idnum:
-            idnum = 0
-        else:g
-            idnum += 1
-        execute_db(query, [idnum, data["name"], data["username"], data["password"]])
-        res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
+        query = "INSERT INTO users VALUES (?,?,?,?)"
+        is_existant = exists(
+            "SELECT * FROM users WHERE username=?", [data["username"]])
+        if is_existant:
+            return make_response(json.dumps({"title": "The resource already exists"}), 409)
+        else:
+            idnum = query_db(
+                "SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
+            if not idnum:
+                idnum = 0
+            else:
+                idnum += 1
+            execute_db(query, [idnum, data["name"],
+                               data["username"], data["password"]])
+            res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
     elif request.method == "PATCH":
         query = "UPDATE users SET password=? WHERE id=?"
         execute_db(query, [data["password"], id])
@@ -94,7 +115,7 @@ def users(id=None):
     elif request.method == "DELETE":
         if id is not None:
             query = "DELETE * FROM users WHERE id=?"
-            execute_db(query,[id])
+            execute_db(query, [id])
         else:
             query = "DELETE * FROM users"
             execute_db(query)
@@ -102,27 +123,41 @@ def users(id=None):
         res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
 
-@app.route('/series', methods=["POST", "GET","DELETE"])
-@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH","DELETE"])
+
+@app.route('/series', methods=["POST", "GET", "DELETE"])
+@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH", "DELETE"])
 def series(id=None):
     res = ''
     data = json.loads(request.data)
     if request.method == "POST":
         if id is None:
-            idnum = query_db("SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)")
-            if not idnum:
-                idnum = 0
+            is_existant = exists(
+                "SELECT * FROM serie WHERE name=?", [data["name"]])
+            if is_existant:
+                return make_response(json.dumps({"title": "The resource already exists"}), 409)
             else:
-                idnum += 1
-            query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
-            category_id = query_db("SELECT id from category WHERE name=?", [data["category"]], one=True)
-            execute_db(query, [idnum, data["name"], data["start_date"], data["synopse"], category_id])
-            res = {"items": [{"href": "/series/{}".format(idnum)}]}
+                idnum = query_db(
+                    "SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)")
+                if not idnum:
+                    idnum = 0
+                else:
+                    idnum += 1
+                query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
+                execute_db(
+                    query, [idnum, data["name"], data["start_date"], data["synopse"], data["category_id"]])
+                res = {"items": [{"href": "/series/{}".format(idnum)}]}
         else:
-            query = "INSERT INTO list_series VALUES (?,?,?)"
-            classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
-            execute_db(query, [data["user_id"], classification_id, id])
-            res = {"items": [{"href": "/series/{}".format(id), "op": "list_series"}]}
+            is_existant = exists(
+                "SELECT * from list_series WHERE user_id=? AND serie_id=?", [data["user_id"], id])
+            if is_existant:
+                return make_response(json.dumps({"title": "The resource already exists"}), 409)
+            else:
+                query = "INSERT INTO list_series VALUES (?,?,?)"
+                classification_id = query_db("SELECT id FROM classification WHERE initials=?", [
+                                             data["classification"]], one=True)
+                execute_db(query, [data["user_id"], classification_id, id])
+                res = {
+                    "items": [{"href": "/series/{}".format(id), "op": "list_series"}]}
     elif request.method == "GET":
         if id is None:
             if "op" not in data:
@@ -131,52 +166,57 @@ def series(id=None):
             else:
                 if "op" == "SERIE_U":
                     query = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
-                    res = {"items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
+                    res = {
+                        "items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
                 elif "op" == "SERIE_C":
                     query = "SELECT * FROM serie WHERE category_id=?"
-                    res = {"items": [{"data": query_db(query, [data["category_id"]])}]}
+                    res = {
+                        "items": [{"data": query_db(query, [data["category_id"]])}]}
         else:
             query = "SELECT * FROM serie WHERE id=?"
             res = {"items": [{"data": query_db(query, [id], one=True)}]}
     elif request.method == "PATCH":
         query = "UPDATE list_series SET classification_id=? WHERE user_id=? AND serie_id=?"
         query_select = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
-        classification_id = query_db("SELECT id FROM classification WHERE initials=?", [data["classification"]], one=True)
-        execute_db(query, [classification_id, data["user_id"], data["serie_id"]])
-        res = {"items": [{"data": query_db(query_select, [data["user_id"], id], one=True)}]}
+        classification_id = query_db("SELECT id FROM classification WHERE initials=?", [
+                                     data["classification"]], one=True)
+        execute_db(query, [classification_id,
+                           data["user_id"], data["serie_id"]])
+        res = {
+            "items": [{"data": query_db(query_select, [data["user_id"], id], one=True)}]}
     elif request.method == "DELETE":
-        if "op" not in data:
-            if id is not None:
-                query = "DELETE * FROM series WHERE id=?"
-                execute_db(query,[id])
-            else:
-                query = "DELETE * FROM series"
-                execute_db(query)
-            new_line = query_db("SELECT * FROM series")
-            res = {"items": [{"data": new_line}]}
+        if id is not None:
+            query = "DELETE * FROM series WHERE id=?"
+            execute_db(query, [id])
         else:
-            if "op" == "SERIE_U":
-                query = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
-                res = {"items": [{"data": query_db(query, [data["user_id"], data["serie_id"]])}]}
-            elif "op" == "SERIE_C":
-                query = "SELECT * FROM serie WHERE category_id=?"
-                res = {"items": [{"data": query_db(query, [data["category_id"]])}]}
+            query = "DELETE * FROM series"
+            execute_db(query)
+        new_line = query_db("SELECT * FROM series")
+        res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
 
-@app.route('/episodios', methods=["POST", "GET","DELETE"])
-@app.route('/episodios/<int:id>', methods=["GET","DELETE"])
+
+@app.route('/episodios', methods=["POST", "GET", "DELETE"])
+@app.route('/episodios/<int:id>', methods=["GET", "DELETE"])
 def episodios(id=None):
     res = ''
     data = json.loads(request.data)
     if request.method == "POST":
-        idnum = query_db("SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True)
-        if not idnum:
-            idnum = 0
+        is_existant = exists(
+            "SELECT * FROM episode WHERE name=? AND serie_id=?", [data["name"], data["serie_id"]])
+        if is_existant:
+            return make_response(json.dumps({"title": "The resource already exists"}), 409)
         else:
-            idnum += 1
-        query = "INSERT into episode VALUES (?, ?, ?, ?)"
-        execute_db(query, [idnum, data["name"], data["description"], data["serie_id"]])
-        res = {"items": [{"href": "/episodios/{}".format(idnum)}]}
+            idnum = query_db(
+                "SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True)
+            if not idnum:
+                idnum = 0
+            else:
+                idnum += 1
+            query = "INSERT into episode VALUES (?, ?, ?, ?)"
+            execute_db(query, [idnum, data["name"],
+                               data["description"], data["serie_id"]])
+            res = {"items": [{"href": "/episodios/{}".format(idnum)}]}
     elif request.method == "GET":
         if id is not None:
             query_select = "SELECT * FROM episode WHERE id=?"
@@ -187,13 +227,14 @@ def episodios(id=None):
     elif request.method == "DELETE":
         if id is not None:
             query = "DELETE * FROM episode WHERE id=?"
-            execute_db(query,[id])
+            execute_db(query, [id])
         else:
             query = "DELETE * FROM episode"
             execute_db(query)
         new_line = query_db("SELECT * FROM episode")
         res = {"items": [{"data": new_line}]}
     return make_response(json.dumps(res))
+
 
 if __name__ == "__main__":
     app.run()
