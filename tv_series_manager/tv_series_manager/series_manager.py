@@ -85,6 +85,8 @@ def users(id=None):
     res = {}
     if request.data:
         data = json.loads(request.data)
+    else:
+        data = {}
     code = 200
     if request.method == "GET":
         if id is not None:
@@ -151,6 +153,8 @@ def series(id=None):
     res = {}
     if request.data:
         data = json.loads(request.data)
+    else:
+        data = {}
     code = 200
     if request.method == "POST":
         if id is None:
@@ -256,9 +260,10 @@ def series(id=None):
 @app.route('/episodios/<int:id>', methods=["GET", "DELETE"])
 def episodios(id=None):
     res = {}
-    print(request.data)
     if request.data:
         data = json.loads(request.data)
+    else:
+        data = {}
     code = 200
     if request.method == "POST":
         is_existent = exists(

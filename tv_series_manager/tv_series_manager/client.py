@@ -87,14 +87,14 @@ def message_parser(message):
         return requests.get('http://localhost:5000/utilizadores')
     elif re.match(r"SHOW ALL SERIE", message):
         return requests.get('http://localhost:5000/series')
+    elif re.match(r"SHOW ALL EPISODIO \d+", message):
+        return requests.get('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
     elif re.match(r"SHOW ALL EPISODIO", message):
         return requests.get('http://localhost:5000/episodios')
     elif re.match(r"SHOW ALL SERIE_U \d+", message):
         return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"SHOW ALL SERIE_C \d+", message):
         return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
-    elif re.match(r"SHOW ALL EPISODIO \d+", message):
-        return requests.get('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
 
     elif re.match(r"UPDATE SERIE \d+ \d+ [A-Z]{1,2}", message):
         return requests.patch('http://localhost:5000/series/' + elements[3], data=json.dumps({"serie_id": int(elements[2]), "classification": elements[4]}))
