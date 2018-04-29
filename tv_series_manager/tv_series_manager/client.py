@@ -2,6 +2,7 @@
 from __future__ import print_function
 import requests
 import re
+import json
 
 
 def handle_requests():
@@ -10,13 +11,34 @@ def handle_requests():
         cmd = raw_input("Comando? ")
         if cmd and cmd != 'exit':
             response = message_parser(cmd)
-            response_parser(response)
+            if response == "UNKNOWN COMMAND":
+                print(response)
+            else:
+                response_parser(response)
         elif cmd == 'exit':
             stop = True
 
 
 def response_parser(response):
-    print(response)
+    print("Status Code: {}".format(response.status_code))
+    try:
+        json_response = response.json()
+    except ValueError:
+        json_response = {"items": [{}]}
+    if response.ok:
+        items = json_response["items"][0]
+        if 'href' in items:
+            print("URI: {}".format(items["href"]))
+        elif 'data' in items:
+            if items["data"]:
+                for data_line in items["data"]:
+                    data_line = map(lambda x: str(x), data_line)
+                    print("Data: {}".format(", ".join(data_line)))
+            else:
+                print("Data: []")
+    else:
+        if "title" in json_response:
+            print("Title: {}".format(json_response["title"]))
 
 
 def message_parser(message):
@@ -28,13 +50,13 @@ def message_parser(message):
     elements = message.split()
 
     if re.match(r"ADD USER [A-Za-z]+ [A-Za-z\d]+ [A-Za-z\d]+", message):
-        return requests.post("http://localhost:5000/utilizadores", data={"name": elements[2], "username": elements[3], "password": elements[4]})
-    elif re.match(r"ADD SERIE [A-Za-z]+ [\d]{4}-[\d]{2}-[\d]{2} [A-Za-z\d]+ [\d]+", message):
-        return requests.post("http://localhost:5000/series", data={"name": elements[2], "start_date": elements[3], "synopse": elements[4], "category": elements[5]})
+        return requests.post("http://localhost:5000/utilizadores", data=json.dumps({"name": elements[2], "username": elements[3], "password": elements[4]}))
+    elif re.match(r"ADD SERIE [A-Za-z\d]+ [\d]{4}-[\d]{2}-[\d]{2} [A-Za-z\d]+ \d+", message):
+        return requests.post("http://localhost:5000/series", data=json.dumps({"name": elements[2], "start_date": elements[3], "synopse": elements[4], "category_id": elements[5]}))
     elif re.match(r"ADD EPISODIO [A-Za-z\d]+ [A-Za-z\d]+ \d+", message):
-        return requests.post('http://localhost:5000/episodios', data={"name": elements[2], "description": elements[3], "serie_id": int(elements[4])})
+        return requests.post('http://localhost:5000/episodios', data=json.dumps({"name": elements[2], "description": elements[3], "serie_id": int(elements[4])}))
     elif re.match(r"ADD \d+ \d+ [A-Z]{1,2}", message):
-        return requests.post('http://localhost:5000/series/' + elements[2], data={"user_id": int(elements[1]), "classification": elements[3]})
+        return requests.post('http://localhost:5000/series/' + elements[2], data=json.dumps({"user_id": int(elements[1]), "classification": elements[3]}))
 
     elif re.match(r"REMOVE USER \d+", message):
         return requests.delete('http://localhost:5000/utilizadores/' + elements[2])
@@ -49,11 +71,11 @@ def message_parser(message):
     elif re.match(r"REMOVE ALL EPISODIO", message):
         return requests.delete('http://localhost:5000/episodios')
     elif re.match(r"SHOW ALL SERIE_U \d+", message):
-        return requests.get('http://localhost:5000/series', data={"op": elements[2]})
+        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"SHOW ALL SERIE_C \d+", message):
-        return requests.get('http://localhost:5000/series', data={"op": elements[2]})
+        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
     elif re.match(r"REMOVE ALL EPISODIO \d+", message):
-        return requests.delete('http://localhost:5000/series/' + elements[3])
+        return requests.delete('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
 
     elif re.match(r"SHOW USER \d+", message):
         return requests.get('http://localhost:5000/utilizadores/' + elements[2])
@@ -68,16 +90,16 @@ def message_parser(message):
     elif re.match(r"SHOW ALL EPISODIO", message):
         return requests.get('http://localhost:5000/episodios')
     elif re.match(r"SHOW ALL SERIE_U \d+", message):
-        return requests.get('http://localhost:5000/series', data={"op": elements[2]})
+        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"SHOW ALL SERIE_C \d+", message):
-        return requests.get('http://localhost:5000/series', data={"op": elements[2]})
+        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"SHOW ALL EPISODIO \d+", message):
-        return requests.get('http://localhost:5000/series/' + elements[3])
+        return requests.get('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
 
     elif re.match(r"UPDATE SERIE \d+ \d+ [A-Z]{1,2}", message):
-        return requests.patch('http://localhost:5000/series/' + elements[3], data={"serie_id": int(elements[2]), "classification": elements[4]})
+        return requests.patch('http://localhost:5000/series/' + elements[3], data=json.dumps({"serie_id": int(elements[2]), "classification": elements[4]}))
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
-        return requests.patch('http://localhost:5000/series/' + elements[2], data={"password": elements[3]})
+        return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
     return ret
 
