@@ -73,10 +73,10 @@ def message_parser(message):
         return requests.delete('http://localhost:5000/series')
     elif re.match(r"REMOVE ALL EPISODIO", message):
         return requests.delete('http://localhost:5000/episodios')
-    elif re.match(r"SHOW ALL SERIE_U \d+", message):
-        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
-    elif re.match(r"SHOW ALL SERIE_C \d+", message):
-        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
+    elif re.match(r"REMOVE ALL SERIE_U \d+", message):
+        return requests.delete('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
+    elif re.match(r"REMOVE ALL SERIE_C \d+", message):
+        return requests.delete('http://localhost:5000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
     elif re.match(r"REMOVE ALL EPISODIO \d+", message):
         return requests.delete('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
 
