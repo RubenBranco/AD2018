@@ -23,10 +23,11 @@ CREATE TABLE list_series (
   user_id INTEGER,
   classification_id INTEGER,
   serie_id INTEGER,
+  PRIMARY KEY (USER_ID, SERIE_ID),
   FOREIGN KEY(user_id) REFERENCES users(id),
   FOREIGN KEY(classification_id) REFERENCES classification(id),
   FOREIGN KEY(serie_id) REFERENCES serie(id)
-);
+); 
 
 CREATE TABLE serie (
   id INTEGER PRIMARY KEY,
