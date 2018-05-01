@@ -184,7 +184,7 @@ def series(id=None):
             else:
                 query = "INSERT INTO list_series VALUES (?,?,?)"
                 classification_id = list(query_db("SELECT id FROM classification WHERE initials=?", [
-                    data["classification"]], one=True))
+                    data["classification"]], one=True))[0]
                 execute_db(query, [data["user_id"], classification_id, id])
                 res = {
                     "items": [{"href": "/series/{}".format(id), "op": "list_series"}]}
@@ -232,13 +232,13 @@ def series(id=None):
     elif request.method == "PATCH":
         query = "UPDATE list_series SET classification_id=? WHERE user_id=? AND serie_id=?"
         is_existent = exists(
-            "SELECT * FROM list_series WHERE user_id=? AND serie_id=?", [data["user_id"], data["serie_id"]])
+            "SELECT * FROM list_series WHERE user_id=? AND serie_id=?", [data["user_id"], id])
         if is_existent:
             query_select = "SELECT * FROM list_series WHERE user_id=? AND serie_id=?"
             classification_id = list(query_db("SELECT id FROM classification WHERE initials=?", [
-                data["classification"]], one=True))
+                data["classification"]], one=True))[0]
             execute_db(query, [classification_id,
-                               data["user_id"], data["serie_id"]])
+                               data["user_id"], id])
             res = {
                 "items": [{"data": [list(query_db(query_select, [data["user_id"], id], one=True))]}]}
         else:

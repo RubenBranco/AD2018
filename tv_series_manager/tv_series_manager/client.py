@@ -100,7 +100,7 @@ def message_parser(message):
         return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
 
     elif re.match(r"UPDATE SERIE \d+ \d+ [A-Z]{1,2}", message):
-        return requests.patch('http://localhost:5000/series/' + elements[3], data=json.dumps({"serie_id": int(elements[2]), "classification": elements[4]}))
+        return requests.patch('http://localhost:5000/series/' + elements[3], data=json.dumps({"user_id": int(elements[2]), "classification": elements[4]}))
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
         return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
