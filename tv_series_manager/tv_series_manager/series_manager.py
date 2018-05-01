@@ -245,12 +245,20 @@ def series(id=None):
             res = {"items": [{"data": []}]}
             code = 204
     elif request.method == "DELETE":
-        if id is not None:
-            query = "DELETE FROM series WHERE id=?"
-            execute_db(query, [id])
+        if request.data and "op" in request.data:
+            if data["op"] == "SERIE_U":
+                query = "DELETE FROM list_series WHERE user_id=?"
+                execute_db(query, [data["user_id"]])
+            elif data["op"] == "SERIE_C":
+                query = "DELETE FROM serie WHERE category_id=?"
+                execute_db(query, [data["category_id"]])
         else:
-            query = "DELETE FROM series"
-            execute_db(query)
+            if id is not None:
+                query = "DELETE FROM serie WHERE id=?"
+                execute_db(query, [id])
+            else:
+                query = "DELETE FROM serie"
+                execute_db(query)
         res = {"items": [{"data": []}]}
         code = 204
     return make_response(json.dumps(res), code)
@@ -315,12 +323,16 @@ def episodios(id=None):
                     all_episodes = []
                 res = {"items": [{"data": all_episodes}]}
     elif request.method == "DELETE":
-        if id is not None:
-            query = "DELETE FROM episode WHERE id=?"
-            execute_db(query, [id])
+        if request.data and "op" in request.data:
+            query = "DELETE FROM episode WHERE serie_id=?"
+            execute_db(query, [data["serie_id"]])
         else:
-            query = "DELETE FROM episode"
-            execute_db(query)
+            if id is not None:
+                query = "DELETE FROM episode WHERE id=?"
+                execute_db(query, [id])
+            else:
+                query = "DELETE FROM episode"
+                execute_db(query)
         res = {"items": [{"data": []}]}
         code = 204
     return make_response(json.dumps(res), code)
