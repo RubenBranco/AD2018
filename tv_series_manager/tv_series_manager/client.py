@@ -49,12 +49,15 @@ def message_parser(message):
     ret = "UNKNOWN COMMAND"
     elements = message.split()
 
-    if re.match(r"ADD USER [A-Za-z]+ [A-Za-z\d]+ [A-Za-z\d]+", message):
-        return requests.post("http://localhost:5000/utilizadores", data=json.dumps({"name": elements[2], "username": elements[3], "password": elements[4]}))
-    elif re.match(r"ADD SERIE [A-Za-z\d]+ [\d]{4}-[\d]{2}-[\d]{2} [A-Za-z\d]+ \d+", message):
-        return requests.post("http://localhost:5000/series", data=json.dumps({"name": elements[2], "start_date": elements[3], "synopse": elements[4], "category_id": elements[5]}))
-    elif re.match(r"ADD EPISODIO [A-Za-z\d]+ [A-Za-z\d]+ \d+", message):
-        return requests.post('http://localhost:5000/episodios', data=json.dumps({"name": elements[2], "description": elements[3], "serie_id": int(elements[4])}))
+    if re.match(r"ADD USER \"[ A-Za-z]{1,128}\" \"[ A-Za-z\d]{1,64}\" [ A-Za-z\d]{1,64}", message):
+        name, username, password = re.findall(r"ADD USER (\"[ A-Za-z]{1,128}\") (\"[ A-Za-z\d]{1,64}\") ([ A-Za-z\d]{1,64})", message)[0]
+        return requests.post("http://localhost:5000/utilizadores", data=json.dumps({"name": name.strip('"'), "username": username.strip('"'), "password": password}))
+    elif re.match(r"ADD SERIE [ A-Za-z\-,.\d]{1,20} [\d]{4}-[\d]{2}-[\d]{2} [ A-Za-z\-,.\d]+ \d+", message):
+        name, date, synopse, category_id = re.findall(r"ADD SERIE ([ A-Za-z\-,.\d]{1,20}) ([\d]{4}-[\d]{2}-[\d]{2}) ([ A-Za-z\-,.\d]+) (\d+)", message)[0]
+        return requests.post("http://localhost:5000/series", data=json.dumps({"name": name, "start_date": date, "synopse": synopse, "category_id": category_id}))
+    elif re.match(r"ADD EPISODIO \"[ A-Za-z\d,.']+\" \"[ A-Za-z\d,.']+\" \d+", message):
+        name, description, serie_id = re.findall(r"ADD EPISODIO (\"[ A-Za-z\d,.\-']+\") (\"[ A-Za-z\d,.\-']+\") (\d+)", message)[0]
+        return requests.post('http://localhost:5000/episodios', data=json.dumps({"name": name.strip('"'), "description": description.strip('"'), "serie_id": int(serie_id)}))
     elif re.match(r"ADD \d+ \d+ [A-Z]{1,2}", message):
         return requests.post('http://localhost:5000/series/' + elements[2], data=json.dumps({"user_id": int(elements[1]), "classification": elements[3]}))
 
