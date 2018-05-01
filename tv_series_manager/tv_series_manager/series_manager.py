@@ -114,12 +114,12 @@ def users(id=None):
             res = {"title": "The resource already exists"}
             code = 409
         else:
-            idnum = list(query_db(
-                "SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True))
-            if not idnum:
+            idnum = query_db(
+                "SELECT id FROM users WHERE id=(SELECT MAX(id) FROM users)", one=True)
+            if idnum is None:
                 idnum = 0
             else:
-                idnum = idnum[0] + 1
+                idnum = list(idnum)[0] + 1
             execute_db(query, [idnum, data["name"],
                                data["username"], data["password"]])
             res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
@@ -164,12 +164,12 @@ def series(id=None):
                 res = {"title": "The resource already exists"}
                 code = 409
             else:
-                idnum = list(query_db(
-                    "SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)", one=True))
-                if not idnum:
+                idnum = query_db(
+                    "SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)", one=True)
+                if idnum is None:
                     idnum = 0
                 else:
-                    idnum = idnum[0] + 1
+                    idnum = list(idnum)[0] + 1
                 query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
                 execute_db(
                     query, [idnum, data["name"], data["start_date"], data["synopse"], data["category_id"]])
@@ -276,12 +276,12 @@ def episodios(id=None):
             res = {"title": "The resource serie with id {} does not exist".format(data["serie_id"])}
             code = 404
         else:
-            idnum = list(query_db(
-                "SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True))
-            if not idnum:
+            idnum = query_db(
+                "SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True)
+            if idnum is None:
                 idnum = 0
             else:
-                idnum = idnum[0] + 1
+                idnum = list(idnum)[0] + 1
             query = "INSERT into episode VALUES (?, ?, ?, ?)"
             execute_db(query, [idnum, data["name"],
                                data["description"], data["serie_id"]])
