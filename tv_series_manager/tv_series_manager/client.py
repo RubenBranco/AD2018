@@ -36,9 +36,8 @@ def response_parser(response):
                     print("Data: {}".format(", ".join(data_line)))
             else:
                 print("Data: []")
-    else:
-        if "title" in json_response:
-            print("Title: {}".format(json_response["title"]))
+    if "title" in json_response:
+        print("Title: {}".format(json_response["title"]))
 
 
 def message_parser(message):

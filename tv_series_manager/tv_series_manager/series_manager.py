@@ -133,7 +133,7 @@ def users(id=None):
                 "SELECT * FROM users WHERE id=?", [id], one=True))
             res = {"items": [{"data": [new_line]}]}
         else:
-            res = {"items": [{"data": []}]}
+            res = {"title": "The resource you wish to update does not exist."}
             code = 204
     elif request.method == "DELETE":
         if id is not None:
@@ -242,7 +242,7 @@ def series(id=None):
             res = {
                 "items": [{"data": [list(query_db(query_select, [data["user_id"], id], one=True))]}]}
         else:
-            res = {"items": [{"data": []}]}
+            res = {"title": "The resource you wish to update does not exist."}
             code = 204
     elif request.method == "DELETE":
         if request.data and "op" in request.data:
