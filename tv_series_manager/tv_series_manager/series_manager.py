@@ -119,7 +119,7 @@ def users(id=None):
             if not idnum:
                 idnum = 0
             else:
-                idnum += 1
+                idnum = idnum[0] + 1
             execute_db(query, [idnum, data["name"],
                                data["username"], data["password"]])
             res = {"items": [{"href": "/utilizadores/{}".format(idnum)}]}
@@ -137,13 +137,13 @@ def users(id=None):
             code = 204
     elif request.method == "DELETE":
         if id is not None:
-            query = "DELETE * FROM users WHERE id=?"
+            query = "DELETE FROM users WHERE id=?"
             execute_db(query, [id])
         else:
-            query = "DELETE * FROM users"
+            query = "DELETE FROM users"
             execute_db(query)
-        new_line = list(query_db("SELECT * FROM users"))
-        res = {"items": [{"data": new_line}]}
+        res = {"items": [{"data": []}]}
+        code = 204
     return make_response(json.dumps(res), code)
 
 
@@ -165,11 +165,11 @@ def series(id=None):
                 code = 409
             else:
                 idnum = list(query_db(
-                    "SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)"))
+                    "SELECT id FROM serie WHERE id=(SELECT MAX(id) FROM serie)", one=True))
                 if not idnum:
                     idnum = 0
                 else:
-                    idnum += 1
+                    idnum = idnum[0] + 1
                 query = "INSERT into serie VALUES (?, ?, ?, ?, ?)"
                 execute_db(
                     query, [idnum, data["name"], data["start_date"], data["synopse"], data["category_id"]])
@@ -246,13 +246,13 @@ def series(id=None):
             code = 204
     elif request.method == "DELETE":
         if id is not None:
-            query = "DELETE * FROM series WHERE id=?"
+            query = "DELETE FROM series WHERE id=?"
             execute_db(query, [id])
         else:
-            query = "DELETE * FROM series"
+            query = "DELETE FROM series"
             execute_db(query)
-        new_line = list(query_db("SELECT * FROM series"))
-        res = {"items": [{"data": new_line}]}
+        res = {"items": [{"data": []}]}
+        code = 204
     return make_response(json.dumps(res), code)
 
 
@@ -266,18 +266,22 @@ def episodios(id=None):
         data = {}
     code = 200
     if request.method == "POST":
+        is_series_existent = exists("SELECT * FROM serie WHERE id=?", [data["serie_id"]])
         is_existent = exists(
             "SELECT * FROM episode WHERE name=? AND serie_id=?", [data["name"], data["serie_id"]])
         if is_existent:
             res = {"title": "The resource already exists"}
             code = 409
+        elif not is_series_existent:
+            res = {"title": "The resource serie with id {} does not exist".format(data["serie_id"])}
+            code = 404
         else:
-            idnum = query_db(
-                "SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True)
+            idnum = list(query_db(
+                "SELECT id FROM episode WHERE id=(SELECT MAX(id) FROM episode)", one=True))
             if not idnum:
                 idnum = 0
             else:
-                idnum += 1
+                idnum = idnum[0] + 1
             query = "INSERT into episode VALUES (?, ?, ?, ?)"
             execute_db(query, [idnum, data["name"],
                                data["description"], data["serie_id"]])
@@ -312,13 +316,13 @@ def episodios(id=None):
                 res = {"items": [{"data": all_episodes}]}
     elif request.method == "DELETE":
         if id is not None:
-            query = "DELETE * FROM episode WHERE id=?"
+            query = "DELETE FROM episode WHERE id=?"
             execute_db(query, [id])
         else:
-            query = "DELETE * FROM episode"
+            query = "DELETE FROM episode"
             execute_db(query)
-        new_line = list(query_db("SELECT * FROM episode"))
-        res = {"items": [{"data": new_line}]}
+        res = {"items": [{"data": []}]}
+        code = 204
     return make_response(json.dumps(res), code)
 
 
