@@ -13,6 +13,7 @@ def handle_requests():
             response = message_parser(cmd)
             if response == "UNKNOWN COMMAND":
                 print(response)
+                print("WRITE HELP, COMMAND OR COMMANDS TO LIST ALL COMMANDS")
             elif response == "HELP":
                 help_print()
             else:
@@ -67,7 +68,7 @@ def message_parser(message):
     """
     Verifica a mensagem recebida e interpreta-a
     """
-    # TODO fazer as transformacoes para json e passar como dados para enviar ao servidor
+
     ret = "UNKNOWN COMMAND"
     elements = message.split()
 
@@ -129,8 +130,9 @@ def message_parser(message):
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
         return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
-    elif re.match(r"[HELP|COMMANDS|COMMAND|help|commands|command]", message):
+    elif re.match(r"^HELP|COMMANDS|COMMAND|help|commands|command$", message):
         return "HELP"
+
     return ret
 
 
