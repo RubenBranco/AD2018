@@ -9,7 +9,7 @@ def handle_requests():
     stop = False
     while not stop:
         cmd = raw_input("Comando? ")
-        if cmd and cmd != 'exit':
+        if cmd and cmd != 'exit' and cmd != 'EXIT':
             response = message_parser(cmd)
             if response == "UNKNOWN COMMAND":
                 print(response)
@@ -18,7 +18,7 @@ def handle_requests():
                 help_print()
             else:
                 response_parser(response)
-        elif cmd == 'exit':
+        elif cmd == 'exit' or cmd == 'EXIT':
             stop = True
 
 
@@ -62,6 +62,7 @@ def help_print():
     print("------- UPDATE COMMANDS -------")
     print("UPDATE SERIE USER_ID SERIE_ID CLASSIFICATION_ID")
     print("UPDATE USER USER_ID PASSWORD")
+    print("exit or EXIT to exit out of the CLI")
 
 
 def message_parser(message):
