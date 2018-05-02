@@ -48,7 +48,7 @@ def help_print():
     print('MIND THE QUOTES')
     print('------- ADD COMMANDS -------')
     print('ADD USER "NAME" "USERNAME" PASSWORD')
-    print('ADD SERIE NAME DATE "SYNOPSIS" CATEGORY_ID')
+    print('ADD SERIE NAME YYYY-MM-DD "SYNOPSIS" CATEGORY_ID')
     print('ADD EPISODIO "NAME" "DESCRIPTION" SERIE_ID')
     print("USER_ID SERIE_ID CLASSIFICATION_INITIALS")
     print('------- SHOW & REMOVE COMMANDS -------')
