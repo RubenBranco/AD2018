@@ -274,14 +274,16 @@ def episodios(id=None):
         data = {}
     code = 200
     if request.method == "POST":
-        is_series_existent = exists("SELECT * FROM serie WHERE id=?", [data["serie_id"]])
+        is_series_existent = exists(
+            "SELECT * FROM serie WHERE id=?", [data["serie_id"]])
         is_existent = exists(
             "SELECT * FROM episode WHERE name=? AND serie_id=?", [data["name"], data["serie_id"]])
         if is_existent:
             res = {"title": "The resource already exists"}
             code = 409
         elif not is_series_existent:
-            res = {"title": "The resource serie with id {} does not exist".format(data["serie_id"])}
+            res = {"title": "The resource serie with id {} does not exist".format(
+                data["serie_id"])}
             code = 404
         else:
             idnum = query_db(
