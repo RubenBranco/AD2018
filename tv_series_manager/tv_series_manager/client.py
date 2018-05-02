@@ -13,6 +13,8 @@ def handle_requests():
             response = message_parser(cmd)
             if response == "UNKNOWN COMMAND":
                 print(response)
+            elif response == "HELP":
+                help_print()
             else:
                 response_parser(response)
         elif cmd == 'exit':
@@ -40,6 +42,27 @@ def response_parser(response):
         print("Title: {}".format(json_response["title"]))
 
 
+def help_print():
+    print("------- LIST OF COMMANDS -------")
+    print('MIND THE QUOTES')
+    print('------- ADD COMMANDS -------')
+    print('ADD USER "NAME" "USERNAME" PASSWORD')
+    print("ADD SERIE NAME DATE SYNOPSIS CATEGORY_ID")
+    print('ADD EPISODIO "NAME" "DESCRIPTION" SERIE_ID')
+    print("USER_ID SERIE_ID CLASSIFICATION_INITIALS")
+    print('------- SHOW & REMOVE COMMANDS -------')
+    print("SHOW/REMOVE USER USER_ID")
+    print("SHOW/REMOVE SERIE SERIE_ID")
+    print("SHOW/REMOVE EPISODIO EPISODIO_ID")
+    print("SHOW/REMOVE ALL USERS/SERIE/EPISODIO")
+    print("SHOW/REMOVE ALL SERIE_U USER_ID")
+    print("SHOW/REMOVE ALL SERIE_C CATEGORY_ID")
+    print("SHOW/REMOVE ALL EPISODIO SERIE_ID")
+    print("------- UPDATE COMMANDS -------")
+    print("UPDATE SERIE USER_ID SERIE_ID CLASSIFICATION_ID")
+    print("UPDATE USER USER_ID PASSWORD")
+
+
 def message_parser(message):
     """
     Verifica a mensagem recebida e interpreta-a
@@ -49,13 +72,16 @@ def message_parser(message):
     elements = message.split()
 
     if re.match(r"ADD USER \"[ A-Za-z]{1,128}\" \"[ A-Za-z\d]{1,64}\" [ A-Za-z\d]{1,64}", message):
-        name, username, password = re.findall(r"ADD USER (\"[ A-Za-z]{1,128}\") (\"[ A-Za-z\d]{1,64}\") ([ A-Za-z\d]{1,64})", message)[0]
+        name, username, password = re.findall(
+            r"ADD USER (\"[ A-Za-z]{1,128}\") (\"[ A-Za-z\d]{1,64}\") ([ A-Za-z\d]{1,64})", message)[0]
         return requests.post("http://localhost:5000/utilizadores", data=json.dumps({"name": name.strip('"'), "username": username.strip('"'), "password": password}))
     elif re.match(r"ADD SERIE [ A-Za-z\-,.\d]{1,20} [\d]{4}-[\d]{2}-[\d]{2} \"[ A-Za-z\-,.\d]+\" \d+", message):
-        name, date, synopse, category_id = re.findall(r"ADD SERIE ([ A-Za-z\-,.\d]{1,20}) ([\d]{4}-[\d]{2}-[\d]{2}) (\"[ A-Za-z\-,.\d]+\") (\d+)", message)[0]
+        name, date, synopse, category_id = re.findall(
+            r"ADD SERIE ([ A-Za-z\-,.\d]{1,20}) ([\d]{4}-[\d]{2}-[\d]{2}) (\"[ A-Za-z\-,.\d]+\") (\d+)", message)[0]
         return requests.post("http://localhost:5000/series", data=json.dumps({"name": name, "start_date": date, "synopse": synopse.strip('"'), "category_id": category_id}))
     elif re.match(r"ADD EPISODIO \"[ A-Za-z\d,.']+\" \"[ A-Za-z\d,.']+\" \d+", message):
-        name, description, serie_id = re.findall(r"ADD EPISODIO (\"[ A-Za-z\d,.\-']+\") (\"[ A-Za-z\d,.\-']+\") (\d+)", message)[0]
+        name, description, serie_id = re.findall(
+            r"ADD EPISODIO (\"[ A-Za-z\d,.\-']+\") (\"[ A-Za-z\d,.\-']+\") (\d+)", message)[0]
         return requests.post('http://localhost:5000/episodios', data=json.dumps({"name": name.strip('"'), "description": description.strip('"'), "serie_id": int(serie_id)}))
     elif re.match(r"ADD \d+ \d+ [M|MM|S|B|MB]", message):
         return requests.post('http://localhost:5000/series/' + elements[2], data=json.dumps({"user_id": int(elements[1]), "classification": elements[3]}))
@@ -103,6 +129,8 @@ def message_parser(message):
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
         return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
+    elif re.match(r"[HELP|COMMANDS|COMMAND]", message):
+        return "HELP"
     return ret
 
 
