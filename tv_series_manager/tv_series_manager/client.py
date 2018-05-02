@@ -129,7 +129,7 @@ def message_parser(message):
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
         return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
-    elif re.match(r"[HELP|COMMANDS|COMMAND]", message):
+    elif re.match(r"[HELP|COMMANDS|COMMAND|help|commands|command]", message):
         return "HELP"
     return ret
 
