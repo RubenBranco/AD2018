@@ -1,4 +1,4 @@
-from .series_manager import app
+from .series_manager import application
 
 if __name__ == "__main__":
-    app.run()
+    application.run()

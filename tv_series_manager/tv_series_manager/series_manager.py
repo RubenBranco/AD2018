@@ -9,19 +9,19 @@ import sys
 import json
 
 
-app = Flask(__name__)  # cria instancia da aplicacao
+application = Flask(__name__)  # cria instancia da aplicacao
 # carrega o ficheiro de config deste ficheiro , series_manager.py
-app.config.from_object(__name__)
+application.config.from_object(__name__)
 
 # Carrega a config default e faz override a config de uma environment variable
-app.config.update(dict(
-    DATABASE=os.path.join(app.root_path, 'series_manager.db'),
+application.config.update(dict(
+    DATABASE=os.path.join(application.root_path, 'series_manager.db'),
     SECRET_KEY='development key',
     USERNAME='admin',
     PASSWORD='default'
 ))
 
-app.config.from_envvar('FLASKR_SETTINGS', silent=True)
+application.config.from_envvar('FLASKR_SETTINGS', silent=True)
 
 
 def connect_db():
@@ -29,13 +29,13 @@ def connect_db():
     Conecta-se a base de dados, ou inicializa-a
     com base no ficheiro schema.sql
     """
-    db_created = os.path.isfile(app.config['DATABASE'])
-    conn = sqlite3.connect(app.config['DATABASE'])
+    db_created = os.path.isfile(application.config['DATABASE'])
+    conn = sqlite3.connect(application.config['DATABASE'])
     conn.row_factory = sqlite3.Row
     if not db_created:
-        with app.open_resource("schema.sql", mode='r') as f:
+        with application.open_resource("schema.sql", mode='r') as f:
             conn.cursor().executescript(f.read())
-        with app.open_resource("inserts.sql", "r") as f:
+        with application.open_resource("inserts.sql", "r") as f:
             conn.cursor().executescript(f.read())
         conn.commit()
     return conn
@@ -64,7 +64,7 @@ def execute_db(query, args=()):
     conn.commit()
 
 
-@app.teardown_appcontext
+@application.teardown_appcontext
 def fecha_db(error):
     """Com o fim do request fecha a base de dados"""
     if hasattr(g, 'sqlite_db'):
@@ -78,9 +78,9 @@ def exists(query, args=()):
     return False
 
 
-@app.route('/')
-@app.route('/utilizadores', methods=["POST", "GET", "DELETE"])
-@app.route('/utilizadores/<int:id>', methods=["GET", "PATCH", "DELETE"])
+@application.route('/')
+@application.route('/utilizadores', methods=["POST", "GET", "DELETE"])
+@application.route('/utilizadores/<int:id>', methods=["GET", "PATCH", "DELETE"])
 def users(id=None):
     res = {}
     if request.data:
@@ -147,8 +147,8 @@ def users(id=None):
     return make_response(json.dumps(res), code)
 
 
-@app.route('/series', methods=["POST", "GET", "DELETE"])
-@app.route('/series/<int:id>', methods=["GET", "POST", "PATCH", "DELETE"])
+@application.route('/series', methods=["POST", "GET", "DELETE"])
+@application.route('/series/<int:id>', methods=["GET", "POST", "PATCH", "DELETE"])
 def series(id=None):
     res = {}
     if request.data:
@@ -264,8 +264,8 @@ def series(id=None):
     return make_response(json.dumps(res), code)
 
 
-@app.route('/episodios', methods=["POST", "GET", "DELETE"])
-@app.route('/episodios/<int:id>', methods=["GET", "DELETE"])
+@application.route('/episodios', methods=["POST", "GET", "DELETE"])
+@application.route('/episodios/<int:id>', methods=["GET", "DELETE"])
 def episodios(id=None):
     res = {}
     if request.data:
@@ -341,4 +341,4 @@ def episodios(id=None):
 
 
 if __name__ == "__main__":
-    app.run()
+    application.run()
