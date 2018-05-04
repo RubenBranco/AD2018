@@ -6,11 +6,12 @@ import json
 
 
 def handle_requests():
+    session = requests.Session()
     stop = False
     while not stop:
         cmd = raw_input("Comando? ")
         if cmd and cmd != 'exit' and cmd != 'EXIT':
-            response = message_parser(cmd)
+            response = message_parser(cmd, session)
             if response == "UNKNOWN COMMAND":
                 print(response)
                 print("WRITE HELP, COMMAND OR COMMANDS TO LIST ALL COMMANDS")
@@ -65,7 +66,7 @@ def help_print():
     print("exit or EXIT to exit out of the CLI")
 
 
-def message_parser(message):
+def message_parser(message, session):
     """
     Verifica a mensagem recebida e interpreta-a
     """
@@ -76,60 +77,60 @@ def message_parser(message):
     if re.match(r"ADD USER \"[ A-Za-z]{1,128}\" \"[ A-Za-z\d]{1,64}\" [ A-Za-z\d]{1,64}", message):
         name, username, password = re.findall(
             r"ADD USER (\"[ A-Za-z]{1,128}\") (\"[ A-Za-z\d]{1,64}\") ([ A-Za-z\d]{1,64})", message)[0]
-        return requests.post("http://localhost:5000/utilizadores", data=json.dumps({"name": name.strip('"'), "username": username.strip('"'), "password": password}))
+        return session.post("http://localhost:8000/utilizadores", data=json.dumps({"name": name.strip('"'), "username": username.strip('"'), "password": password}))
     elif re.match(r"ADD SERIE [ A-Za-z\-,.\d]{1,20} [\d]{4}-[\d]{2}-[\d]{2} \"[ A-Za-z\-,.\d]+\" \d+", message):
         name, date, synopse, category_id = re.findall(
             r"ADD SERIE ([ A-Za-z\-,.\d]{1,20}) ([\d]{4}-[\d]{2}-[\d]{2}) (\"[ A-Za-z\-,.\d]+\") (\d+)", message)[0]
-        return requests.post("http://localhost:5000/series", data=json.dumps({"name": name, "start_date": date, "synopse": synopse.strip('"'), "category_id": int(category_id)}))
+        return session.post("http://localhost:8000/series", data=json.dumps({"name": name, "start_date": date, "synopse": synopse.strip('"'), "category_id": int(category_id)}))
     elif re.match(r"ADD EPISODIO \"[ A-Za-z\d,.']+\" \"[ A-Za-z\d,.']+\" \d+", message):
         name, description, serie_id = re.findall(
             r"ADD EPISODIO (\"[ A-Za-z\d,.\-']+\") (\"[ A-Za-z\d,.\-']+\") (\d+)", message)[0]
-        return requests.post('http://localhost:5000/episodios', data=json.dumps({"name": name.strip('"'), "description": description.strip('"'), "serie_id": int(serie_id)}))
+        return session.post('http://localhost:8000/episodios', data=json.dumps({"name": name.strip('"'), "description": description.strip('"'), "serie_id": int(serie_id)}))
     elif re.match(r"ADD \d+ \d+ [M|MM|S|B|MB]", message):
-        return requests.post('http://localhost:5000/series/' + elements[2], data=json.dumps({"user_id": int(elements[1]), "classification": elements[3]}))
+        return session.post('http://localhost:8000/series/' + elements[2], data=json.dumps({"user_id": int(elements[1]), "classification": elements[3]}))
 
     elif re.match(r"REMOVE USER \d+", message):
-        return requests.delete('http://localhost:5000/utilizadores/' + elements[2])
+        return session.delete('http://localhost:8000/utilizadores/' + elements[2])
     elif re.match(r"REMOVE SERIE \d+", message):
-        return requests.delete('http://localhost:5000/series/' + elements[2])
+        return session.delete('http://localhost:8000/series/' + elements[2])
     elif re.match(r"REMOVE EPISODIO \d+", message):
-        return requests.delete('http://localhost:5000/episodios/' + elements[2])
+        return session.delete('http://localhost:8000/episodios/' + elements[2])
     elif re.match(r"REMOVE ALL USERS", message):
-        return requests.delete('http://localhost:5000/utilizadores')
+        return session.delete('http://localhost:8000/utilizadores')
     elif re.match(r"REMOVE ALL SERIE_U \d+", message):
-        return requests.delete('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
+        return session.delete('http://localhost:8000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"REMOVE ALL SERIE_C \d+", message):
-        return requests.delete('http://localhost:5000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
+        return session.delete('http://localhost:8000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
     elif re.match(r"REMOVE ALL SERIE", message):
-        return requests.delete('http://localhost:5000/series')
+        return session.delete('http://localhost:8000/series')
     elif re.match(r"REMOVE ALL EPISODIO \d+", message):
-        return requests.delete('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
+        return session.delete('http://localhost:8000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
     elif re.match(r"REMOVE ALL EPISODIO", message):
-        return requests.delete('http://localhost:5000/episodios')
+        return session.delete('http://localhost:8000/episodios')
 
     elif re.match(r"SHOW USER \d+", message):
-        return requests.get('http://localhost:5000/utilizadores/' + elements[2])
+        return session.get('http://localhost:8000/utilizadores/' + elements[2])
     elif re.match(r"SHOW SERIE \d+", message):
-        return requests.get('http://localhost:5000/series/' + elements[2])
+        return session.get('http://localhost:8000/series/' + elements[2])
     elif re.match(r"SHOW EPISODIO \d+", message):
-        return requests.get('http://localhost:5000/episodios/' + elements[2])
+        return session.get('http://localhost:8000/episodios/' + elements[2])
     elif re.match(r"SHOW ALL USERS", message):
-        return requests.get('http://localhost:5000/utilizadores')
+        return session.get('http://localhost:8000/utilizadores')
     elif re.match(r"SHOW ALL SERIE_U \d+", message):
-        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
+        return session.get('http://localhost:8000/series', data=json.dumps({"op": elements[2], "user_id": int(elements[3])}))
     elif re.match(r"SHOW ALL SERIE_C \d+", message):
-        return requests.get('http://localhost:5000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
+        return session.get('http://localhost:8000/series', data=json.dumps({"op": elements[2], "category_id": int(elements[3])}))
     elif re.match(r"SHOW ALL SERIE", message):
-        return requests.get('http://localhost:5000/series')
+        return session.get('http://localhost:8000/series')
     elif re.match(r"SHOW ALL EPISODIO \d+", message):
-        return requests.get('http://localhost:5000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
+        return session.get('http://localhost:8000/episodios', data=json.dumps({"op": elements[2], "serie_id": int(elements[3])}))
     elif re.match(r"SHOW ALL EPISODIO", message):
-        return requests.get('http://localhost:5000/episodios')
+        return session.get('http://localhost:8000/episodios')
 
     elif re.match(r"UPDATE SERIE \d+ \d+ [M|MM|S|B|MB]", message):
-        return requests.patch('http://localhost:5000/series/' + elements[3], data=json.dumps({"user_id": int(elements[2]), "classification": elements[4]}))
+        return session.patch('http://localhost:8000/series/' + elements[3], data=json.dumps({"user_id": int(elements[2]), "classification": elements[4]}))
     elif re.match(r"UPDATE USER \d+ [A-Za-z\d]+", message):
-        return requests.patch('http://localhost:5000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
+        return session.patch('http://localhost:8000/utilizadores/' + elements[2], data=json.dumps({"password": elements[3]}))
 
     elif re.match(r"^HELP|COMMANDS|COMMAND|help|commands|command$", message):
         return "HELP"
