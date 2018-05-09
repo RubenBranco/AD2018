@@ -1,3 +1,5 @@
 .vscode/*
 *.pyc
 \.DS_Store
+
+tv_series_manager/\.python-version
