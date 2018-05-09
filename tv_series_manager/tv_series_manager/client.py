@@ -3,10 +3,12 @@ from __future__ import print_function
 import requests
 import re
 import json
+import os
 
 
 def handle_requests():
     session = requests.Session()
+    session.cert = os.path.join("..", "client.crt")
     stop = False
     while not stop:
         cmd = raw_input("Comando? ")
