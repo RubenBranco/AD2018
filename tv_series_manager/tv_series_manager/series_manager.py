@@ -7,6 +7,7 @@ from flask import Flask, request, session, g, redirect, url_for, abort, \
     render_template, flash, make_response
 import sys
 import json
+import ssl
 
 
 application = Flask(__name__)  # cria instancia da aplicacao
@@ -341,4 +342,7 @@ def episodios(id=None):
 
 
 if __name__ == "__main__":
-    application.run()
+    context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+    context.load_cert_chain('../server.crt', '../server.key')
+    context.load_verify_locations('../root.pem')
+    application.run(ssl_context=context, debug=True, threated=True)
