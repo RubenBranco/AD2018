@@ -4,13 +4,33 @@ import requests
 import re
 import json
 import os
+from requests_oauthlib import OAuth2Session
 
 
 def handle_requests():
+    
+    # Credenciais obtidas da API github no registo da aplicacao
+    client_id = 'd58498b6e10353206e26'
+    client_secret = 'c6a8aca3d7e69b7a69a7d90e70d259902e9a7f3d'
 
+    # Servidores da github para obtencao do authorization_code e do token
+    authorization_base_url = 'https://github.com/login/oauth/authorize'
+    token_url = 'https://github.com/login/oauth/access_token'
+    github = OAuth2Session(client_id)
+
+    authorization_url, state = github.authorization_url(authorization_base_url)
+    print('Aceder ao link (via browser) para obter a autorizacao,', authorization_url)
+
+    # Obter o authorization_code do servidor vindo no URL de redireccionamento
+    redirect_response = raw_input(' insira o URL devolvido no browser e cole aqui:')
+
+    # Obtencao do token
+    github.fetch_token(token_url, client_secret=client_secret, authorization_response=redirect_response)
+    
     session = requests.Session()
     session.cert = [os.path.join("..", "client.crt"), os.path.join("..", "client.key")]
     session.verify = os.path.join("..", "root.pem")
+
     stop = False
     while not stop:
         cmd = raw_input("Comando? ")

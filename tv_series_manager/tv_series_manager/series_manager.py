@@ -345,4 +345,4 @@ if __name__ == "__main__":
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     context.load_cert_chain('../server.crt', '../server.key')
     context.load_verify_locations('../root.pem')
-    application.run(ssl_context=context, debug=True, threated=True)
+    application.run(ssl_context=context, debug=True, threaded=True)
