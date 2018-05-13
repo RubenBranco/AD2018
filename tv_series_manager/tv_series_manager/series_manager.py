@@ -53,6 +53,9 @@ def get_db():
 
 
 def query_db(query, args=(), one=False):
+    """
+    Interroga a base de dados através de queries(SELECT) dadas.
+    """
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
@@ -60,6 +63,9 @@ def query_db(query, args=(), one=False):
 
 
 def execute_db(query, args=()):
+    """
+    Conecta-se à base de dados e executa INSERT e UPDATE queries.
+    """
     conn = get_db()
     conn.cursor().execute(query, args)
     conn.commit()
@@ -67,12 +73,17 @@ def execute_db(query, args=()):
 
 @application.teardown_appcontext
 def fecha_db(error):
-    """Com o fim do request fecha a base de dados"""
+    """
+    Com o fim do request fecha a base de dados.
+    """
     if hasattr(g, 'sqlite_db'):
         g.sqlite_db.close()
 
 
 def exists(query, args=()):
+    """
+    Verifica se uma entrada existe na base de dados.
+    """
     fetch = query_db(query, args, one=True)
     if fetch is not None:
         return True
@@ -83,6 +94,9 @@ def exists(query, args=()):
 @application.route('/utilizadores', methods=["POST", "GET", "DELETE"])
 @application.route('/utilizadores/<int:id>', methods=["GET", "PATCH", "DELETE"])
 def users(id=None):
+    """
+    Recebe requests para o url /utilizadores/ e gere com a base de dados.
+    """
     res = {}
     if request.data:
         data = json.loads(request.data)
@@ -151,6 +165,9 @@ def users(id=None):
 @application.route('/series', methods=["POST", "GET", "DELETE"])
 @application.route('/series/<int:id>', methods=["GET", "POST", "PATCH", "DELETE"])
 def series(id=None):
+    """
+    Recebe requests para o url /series/ e gere com a base de dados.
+    """
     res = {}
     if request.data:
         data = json.loads(request.data)
@@ -268,6 +285,9 @@ def series(id=None):
 @application.route('/episodios', methods=["POST", "GET", "DELETE"])
 @application.route('/episodios/<int:id>', methods=["GET", "DELETE"])
 def episodios(id=None):
+    """
+    Recebe requests para o url /episodios/ e gere com a base de dados.
+    """
     res = {}
     if request.data:
         data = json.loads(request.data)
@@ -342,6 +362,7 @@ def episodios(id=None):
 
 
 if __name__ == "__main__":
+    connect_db()
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
     context.load_cert_chain('../server.crt', '../server.key')
     context.load_verify_locations('../root.pem')

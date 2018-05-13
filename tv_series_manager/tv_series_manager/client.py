@@ -8,7 +8,9 @@ from requests_oauthlib import OAuth2Session
 
 
 def handle_requests():
-
+    """
+    Obtem token e obtem comandos do utilizador para mandar para o cliente.
+    """
     # Credenciais obtidas da API github no registo da aplicacao
     client_id = 'd58498b6e10353206e26'
     client_secret = 'c6a8aca3d7e69b7a69a7d90e70d259902e9a7f3d'
@@ -51,6 +53,9 @@ def handle_requests():
 
 
 def response_parser(response):
+    """
+    Verifica a mensagem do servidor e apresenta-a ao cliente.
+    """
     print("Status Code: {}".format(response.status_code))
     try:
         json_response = response.json()
@@ -72,6 +77,9 @@ def response_parser(response):
 
 
 def help_print():
+    """
+    Print um menu de comandos disponiveis na plataforma.
+    """
     print("------- LIST OF COMMANDS -------")
     print('MIND THE QUOTES')
     print('------- ADD COMMANDS -------')
@@ -95,7 +103,7 @@ def help_print():
 
 def message_parser(message, session, token):
     """
-    Verifica a mensagem recebida e interpreta-a
+    Verifica a mensagem recebida e interpreta-a.
     """
 
     ret = "UNKNOWN COMMAND"
