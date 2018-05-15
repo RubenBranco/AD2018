@@ -32,9 +32,9 @@ def handle_requests():
         token_url, client_secret=client_secret, authorization_response=redirect_response)
 
     session = requests.Session()
-    session.cert = [os.path.join("..", "client.crt"),
-                    os.path.join("..", "client.key")]
-    session.verify = os.path.join("..", "root.pem")
+    session.cert = [os.path.join("..", "certs", "client.crt"),
+                    os.path.join("..", "certs", "client.key")]
+    session.verify = os.path.join("..", "certs", "root.pem")
 
     stop = False
     while not stop:

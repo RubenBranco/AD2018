@@ -364,6 +364,7 @@ def episodios(id=None):
 if __name__ == "__main__":
     connect_db()
     context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-    context.load_cert_chain('../server.crt', '../server.key')
-    context.load_verify_locations('../root.pem')
+    context.load_cert_chain(os.path.join(
+        '..', 'certs', 'server.crt'), os.path.join('..', 'certs', 'server.key'))
+    context.load_verify_locations(os.path.join('..', 'certs', 'root.pem'))
     application.run(ssl_context=context, debug=True, threaded=True)
