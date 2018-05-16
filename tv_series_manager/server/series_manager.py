@@ -263,7 +263,7 @@ def series(id=None):
             res = {"title": "The resource you wish to update does not exist."}
             code = 204
     elif request.method == "DELETE":
-        if request.data and "op" in request.data:
+        if request.data and "op" in data:
             if data["op"] == "SERIE_U":
                 query = "DELETE FROM list_series WHERE user_id=?"
                 execute_db(query, [data["user_id"]])
@@ -346,7 +346,7 @@ def episodios(id=None):
                     all_episodes = []
                 res = {"items": [{"data": all_episodes}]}
     elif request.method == "DELETE":
-        if request.data and "op" in request.data:
+        if request.data and "op" in data:
             query = "DELETE FROM episode WHERE serie_id=?"
             execute_db(query, [data["serie_id"]])
         else:
