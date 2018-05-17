@@ -14,6 +14,14 @@ application = Flask(__name__)  # cria instancia da aplicacao
 # carrega o ficheiro de config deste ficheiro , series_manager.py
 application.config.from_object(__name__)
 
+# GITHUB
+client_id = 'd58498b6e10353206e26'
+client_secret = 'c6a8aca3d7e69b7a69a7d90e70d259902e9a7f3d'
+authorization_base_url = 'https://github.com/login/oauth/authorize'
+token_url = 'https://github.com/login/oauth/access_token'
+
+tokens = {}
+
 # Carrega a config default e faz override a config de uma environment variable
 application.config.update(dict(
     DATABASE=os.path.join(application.root_path, 'series_manager.db'),
@@ -358,6 +366,25 @@ def episodios(id=None):
                 execute_db(query)
         res = {"items": [{"data": []}]}
         code = 204
+    return make_response(json.dumps(res), code)
+
+
+@application.route('/tokens', methods=["POST"])
+def token():
+    data = json.loads(request.data)
+    valid = True
+    code = 201
+    res = {}
+    # TODO: check validity
+
+    if valid:
+        idnum = max(tokens.keys()) + 1
+        tokens[idnum] = data
+        res = {"items": [{"data": {"id": idnum}}]}
+    else:
+        res = {"title": "Invalid Authorization Code"}
+        code = 400
+
     return make_response(json.dumps(res), code)
 
 
