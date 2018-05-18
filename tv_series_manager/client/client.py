@@ -70,7 +70,10 @@ def handle_requests():
                 elif response == "HELP":
                     help_print()
                 else:
-                    response_parser(response)
+                    parser_res = response_parser(response)
+                    if not parser_res:
+                        authorized = False
+
         elif cmd == 'exit' or cmd == 'EXIT':
             stop = True
 
@@ -107,6 +110,10 @@ def response_parser(response):
                 print("Data: []")
     if "title" in json_response:
         print("Title: {}".format(json_response["title"]))
+        if json_response["title"] == "Invalid Authorization Code":
+            return False
+    
+    return True
 
 
 def help_print():
