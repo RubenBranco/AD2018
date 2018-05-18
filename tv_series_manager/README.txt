@@ -20,7 +20,25 @@ ADD USER "NAME" "USERNAME" PASSWORD
 ADD SERIE NAME YYYY-MM-DD "SYNOPSIS" CATEGORY_ID
 ADD EPISODIO "NAME" "DESCRIPTION" SERIE_ID
 
-* IPTABLES * 
+IPTABLES
+
+Aceitar pings da maquina nemo.alunos.di.fc.ul.pt
+sudo iptables -A INPUT -s 10.101.85.18 -p icmp -j ACCEPT 
+
+Drop de todos os pings para que assim se aceite somente os pings da maquina nemo
+sudo iptables -A INPUT -p icmp -j DROP 
+
+Aceitar ssh da rede local
+sudo iptables -A INPUT -p tcp -s 10.101.148.0/22 --dport 22 -m state --state ESTABLISHED,RELATED -j ACCEPT 
+
+Drop de todos os ssh para garantir que e so ssh da rede local
+sudo iptables -A INPUT -p tcp --dport 22 -m state --state ESTABLISHED,RELATED -j DROP 
+
+Aceitar ligações tcp ao porto 5000 onde está o servidor a correr
+sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT 
+
+Drop a todas as ligações tcp para apenas aceitar a do porto 5000
+sudo iptables -A INPUT -p tcp -j DROP 
 
 Exemplos de operações
 
