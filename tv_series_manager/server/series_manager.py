@@ -314,6 +314,7 @@ def episodios(id=None):
     else:
         data = {}
     code = 200
+
     if data["client_id"] in tokens and tokens[data["client_id"]] == data["token"]:
         if request.method == "POST":
             is_series_existent = exists(
@@ -404,7 +405,7 @@ def token():
             idnum = max(tokens.keys()) + 1
         else:
             idnum = 0
-        tokens[idnum] = data
+        tokens[idnum] = data["token"]
         res = {"items": [{"data": {"id": idnum}}]}
     else:
         res = {"title": "Invalid Authorization Code"}

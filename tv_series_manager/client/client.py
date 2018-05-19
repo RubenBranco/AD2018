@@ -8,7 +8,7 @@ from requests_oauthlib import OAuth2Session
 
 
 def establish_session(session, token):
-    return response_parser(session.post("https://localhost:5000/token", data=json.dumps({"token": token})))
+    return token_response(session.post("https://localhost:5000/token", data=json.dumps({"token": token})))
 
 
 def get_oauth_token():
@@ -56,8 +56,10 @@ def handle_requests():
         if cmd and cmd != 'exit' and cmd != 'EXIT':
             if not authorized:
                 response = establish_session(session, token)
-                if response:
+
+                if response is not None:
                     client_id = response
+                    authorized = True
                 else:
                     print("Invalid token. lease obtain new token")
                     token = get_oauth_token()
@@ -71,7 +73,7 @@ def handle_requests():
                     help_print()
                 else:
                     parser_res = response_parser(response)
-                    if not parser_res:
+                    if parser_res is None:
                         authorized = False
 
         elif cmd == 'exit' or cmd == 'EXIT':
@@ -85,7 +87,7 @@ def token_response(response):
         items = json_response["items"][0]
         return items["data"]["id"]
 
-    return False
+    return None
 
 
 def response_parser(response):
@@ -111,7 +113,7 @@ def response_parser(response):
     if "title" in json_response:
         print("Title: {}".format(json_response["title"]))
         if json_response["title"] == "Invalid Authorization Code":
-            return False
+            return None
     
     return True
 
