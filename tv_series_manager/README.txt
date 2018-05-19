@@ -11,6 +11,13 @@ respetivamente, isto devido à necessidade de encontrar os certificados para SSL
 pelo que se o "working directory" não for uma desses diretórios, e for por exemplo, o diretório do projeto,
 o diretório a cima já não terá certificados.
 
+Funcionalidades extra:
+
+Cada vez que o programa client arranca, antes de os comandos serem feitos ao servidor, o client manda o seu token para o servidor,
+no URL /token, onde o servidor verifica se é um token válido, se não for pede um novo do cliente, e se for é guardado num dicionário no servidor e 
+é dado ao cliente um ID único. Esse id único é mandado em todos os requests em conjunto com o token, para que o servidor possa identificar o request
+com um certo user autenticado, e se não estiver no seu dicionário, o request é rejeitado.
+
 Nos comandos, devido à necessidade de desambiguação de certos parâmetros, foi necessário alterar a maneira com que 
 os parâmetros são inseridos, as mudanças estão disponíveis através do comando HELP e estão listados a baixo:
 
@@ -132,3 +139,48 @@ Funcionalidade: Atualizar opinião de utilizador de uma serie
 UPDATE SERIE 1 0 B
     Resposta: Status Code: 200
               Data: 1, 4, 0
+
+Funcionalidade: Remover utilizador
+
+REMOVE USER 0
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover serie
+
+REMOVE SERIE 0
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover episodio
+
+REMOVE EPISODIO 0
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover TODOS os utilizadores
+
+REMOVE ALL USERS
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover TODOS as series
+
+REMOVE ALL SERIE
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover TODOS os episodios
+
+REMOVE ALL EPISODIO
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover todas as series cujo um utilizador deu opinião
+
+REMOVE ALL SERIE_U 1
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover todas as series de uma dada categoria
+
+REMOVE ALL SERIE_C 1
+    Resposta: Status Code: 204
+
+Funcionalidade: Remover todos os episodios de uma serie
+
+REMOVE ALL EPISODIO 0
+    Resposta: Status Code: 204
