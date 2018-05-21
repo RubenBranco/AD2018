@@ -44,6 +44,9 @@ sudo iptables -A INPUT -p tcp --dport 22 -m state --state ESTABLISHED,RELATED -j
 Aceitar ligações tcp ao porto 5000 onde está o servidor a correr
 sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT 
 
+Aceitar ligação tcp ao porto 443 onde https corre
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
 Drop a todas as ligações tcp para apenas aceitar a do porto 5000
 sudo iptables -A INPUT -p tcp -j DROP 
 
