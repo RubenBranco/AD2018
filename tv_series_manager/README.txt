@@ -29,26 +29,46 @@ ADD EPISODIO "NAME" "DESCRIPTION" SERIE_ID
 
 IPTABLES
 
+Trafego com ligação estabelecida é aceite
+sudo iptables –A INPUT –m state –-state ESTABLISHED,RELATED  –j ACCEPT
+sudo iptables –A OUTPUT –m state –-state ESTABLISHED,RELATED –j ACCEPT
+
+dispositivo loopback não filtrado
+sudo iptables –A INPUT –i lo –j ACCEPT
+sudo iptables –A OUTPUT –o lo –j ACCEPT
+
+máquinas essenciais para o funcionamento dos computadores de laboratório
+sudo iptables -A INPUT -d "10.121.53.14, 10.121.53.15, 10.121.53.16, 10.121.72.23, 10.101.85.6, 10.101.85.138, 10.101.85.18, 10.101.148.1, 10.101.85.136, 10.101.85.137" -j ACCEPT
+sudo iptables -A OUTPUT -s "10.121.53.14, 10.121.53.15, 10.121.53.16, 10.121.72.23, 10.101.85.6, 10.101.85.138, 10.101.85.18, 10.101.148.1, 10.101.85.136, 10.101.85.137" -j ACCEPT
+
+Serviço DNS entrada(INPUT)
+sudo iptables -A INPUT --dport 53 -p udp -j ACCEPT
+sudo iptables -A INPUT --dport 53 -p tcp -j ACCEPT
+
+Serviço DNS saída(OUTPUT)
+sudo iptables -A OUTPUT --dport 53 -p udp -j ACCEPT
+sudo iptables -A OUTPUT --dport 53 -p tcp -j ACCEPT
+
 Aceitar pings da maquina nemo.alunos.di.fc.ul.pt
-sudo iptables -A INPUT -s 10.101.85.18 -p icmp -j ACCEPT 
+sudo iptables -A INPUT -s 10.101.85.18 -p icmp -j ACCEPT
 
-Drop de todos os pings para que assim se aceite somente os pings da maquina nemo
-sudo iptables -A INPUT -p icmp -j DROP 
+Aceitar respostas a pings da maquina nemo.alunos.di.fc.ul.pt
+sudo iptables -A OUTPUT -d 10.101.85.18 -p icmp -j ACCEPT
 
-Aceitar ssh da rede local
-sudo iptables -A INPUT -p tcp -s 10.101.148.0/22 --dport 22 -m state --state ESTABLISHED,RELATED -j ACCEPT 
+Aceitar ssh da rede local entrada(INPUT)
+sudo iptables -A INPUT -p tcp -s 10.101.148.0/22 --dport 22 -j ACCEPT
 
-Drop de todos os ssh para garantir que e so ssh da rede local
-sudo iptables -A INPUT -p tcp --dport 22 -m state --state ESTABLISHED,RELATED -j DROP 
+Aceitar ssh da rede local saída(OUTPUT)
+sudo iptables -A OUTPUT -p tcp -d 10.101.148.0/22 --dport 22 -j ACCEPT 
 
 Aceitar ligações tcp ao porto 5000 onde está o servidor a correr
-sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT 
+sudo iptables -A INPUT -p tcp --dport 5000 -j ACCEPT
 
-Aceitar ligação tcp ao porto 443 onde https corre
-sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+Responder a clientes
+sudo iptables -A OUTPUT -p tcp -j ACCEPT 
 
-Drop a todas as ligações tcp para apenas aceitar a do porto 5000
-sudo iptables -A INPUT -p tcp -j DROP 
+sudo iptables -A INPUT -j DROP
+sudo iptables -A OUTPUT -j DROP
 
 Exemplos de operações
 
